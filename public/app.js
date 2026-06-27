@@ -19,6 +19,46 @@ async function send(method, path, body) {
   return res.json();
 }
 
+// ---- Compare selection (persisted client-side, max 4) ----
+const COMPARE_MAX = 4;
+function getCompare() {
+  try { return JSON.parse(localStorage.getItem('compare') || '[]'); } catch { return []; }
+}
+function setCompare(ids) {
+  try { localStorage.setItem('compare', JSON.stringify(ids.slice(0, COMPARE_MAX))); } catch {}
+  renderCompareBar();
+}
+function toggleCompare(id) {
+  id = Number(id);
+  const ids = getCompare();
+  const i = ids.indexOf(id);
+  if (i >= 0) ids.splice(i, 1);
+  else if (ids.length < COMPARE_MAX) ids.push(id);
+  setCompare(ids);
+}
+function renderCompareBar() {
+  let bar = document.getElementById('compare-bar');
+  const ids = getCompare();
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'compare-bar';
+    bar.className = 'compare-bar';
+    document.body.appendChild(bar);
+  }
+  bar.hidden = ids.length === 0;
+  if (!ids.length) return;
+  bar.innerHTML = `<span>${ids.length} Produkt${ids.length > 1 ? 'e' : ''} zum Vergleich</span>
+    <a class="btn" href="#/vergleich" data-link>Vergleichen</a>
+    <button class="btn secondary" id="compare-clear">Leeren</button>`;
+  bar.querySelector('#compare-clear').addEventListener('click', () => setCompare([]));
+  document.querySelectorAll('[data-compare]').forEach((b) => syncCompareBtn(b));
+}
+function syncCompareBtn(btn) {
+  const active = getCompare().includes(Number(btn.dataset.compare));
+  btn.classList.toggle('active', active);
+  btn.title = active ? 'Aus Vergleich entfernen' : 'Zum Vergleich hinzufügen';
+}
+
 // ---- Local image placeholder (no external network needed) ----
 const THUMB_COLORS = ['#0a7d4b', '#1d6fb8', '#b8860b', '#7a3ea8', '#c2410c', '#0f766e', '#9d174d'];
 function thumbFor(p) {
@@ -73,7 +113,8 @@ function card(p) {
       </div>
       <div class="meta">${p.merchantCount} Händler · ab ${esc(p.bestMerchant)} ${p.inStock ? '· ✅ verfügbar' : '· ⏳ lieferbar'}</div>
       <div class="card-actions">
-        <a class="primary" href="#/product/${p.id}" data-link>Vergleichen</a>
+        <a class="primary" href="#/product/${p.id}" data-link>Details</a>
+        <button data-compare="${p.id}" class="compare-btn" title="Zum Vergleich hinzufügen">⇄</button>
         <button data-wish="${p.id}" title="Zur Merkliste">♡</button>
       </div>
     </div>
@@ -307,8 +348,20 @@ async function viewProduct(id) {
 async function viewDeals() {
   app.innerHTML = spinner();
   const data = await api('/deals?limit=24');
+  const top = data.items[0];
+  const featured = top ? `
+    <div class="hero" style="display:grid;grid-template-columns:1fr;gap:1rem">
+      <div>
+        <span class="pill" style="background:rgba(255,255,255,.25);color:#fff">⭐ Deal des Tages</span>
+        <h1 style="margin:.5rem 0">${esc(top.name)}</h1>
+        <p>−${top.discountPercent}% statt ${euro(top.rrp)} · jetzt nur <strong>${euro(top.lowestPrice)}</strong> bei ${esc(top.bestMerchant)}</p>
+        <div class="chips"><a href="#/product/${top.id}" data-link>Zum Deal →</a></div>
+      </div>
+    </div>` : '';
   app.innerHTML = `
     <div class="hero"><h1>🔥 Top-Deals</h1><p>Die größten Rabatte gegenüber der UVP – jetzt zugreifen.</p></div>
+    ${featured}
+    <div class="section-title"><h2>Alle Deals</h2></div>
     <div class="grid">${data.items.map(card).join('')}</div>`;
 }
 
@@ -350,6 +403,43 @@ async function viewAlerts() {
       : emptyState('Du hast noch keine Preisalarme. Lege einen auf einer Produktseite an.')}`;
   app.querySelectorAll('[data-delalert]').forEach((b) =>
     b.addEventListener('click', async () => { await send('DELETE', '/alerts/' + b.dataset.delalert); viewAlerts(); }));
+}
+
+async function viewCompare(params = {}) {
+  app.innerHTML = spinner();
+  // Support shareable compare links: #/vergleich?ids=1,2,3 seeds the selection.
+  if (params.ids) {
+    const seeded = params.ids.split(',').map(Number).filter((n) => n > 0);
+    if (seeded.length) setCompare([...new Set([...getCompare(), ...seeded])]);
+  }
+  const ids = getCompare();
+  if (!ids.length) { app.innerHTML = emptyState('Noch keine Produkte im Vergleich. Nutze das ⇄ auf den Produktkarten.'); return; }
+  const products = (await Promise.all(ids.map((id) => api('/products/' + id).catch(() => null)))).filter(Boolean);
+  // Rows: collect the union of spec keys plus core attributes.
+  const specKeys = [...new Set(products.flatMap((p) => Object.keys(p.specs)))];
+  const cell = (label, fn) => `<tr><th>${esc(label)}</th>${products.map((p) => `<td>${fn(p)}</td>`).join('')}</tr>`;
+  app.innerHTML = `
+    <div class="section-title"><h2>⇄ Produktvergleich</h2><button class="btn secondary" id="cmp-clear-page">Alle entfernen</button></div>
+    <div class="panel" style="overflow-x:auto">
+    <table class="offers compare-table">
+      <thead><tr><th></th>${products.map((p) => `<th>
+        <a href="#/product/${p.id}" data-link>${esc(p.name)}</a>
+        <button class="btn secondary" data-compare="${p.id}" style="display:block;margin-top:.4rem;font-size:.8rem">Entfernen</button>
+      </th>`).join('')}</tr></thead>
+      <tbody>
+        ${cell('Marke', (p) => esc(p.brand))}
+        ${cell('Bester Preis', (p) => `<strong>${euro(p.lowestPrice)}</strong>`)}
+        ${cell('UVP', (p) => p.rrp ? euro(p.rrp) : '–')}
+        ${cell('Ersparnis', (p) => p.discountPercent > 0 ? `−${p.discountPercent}%` : '–')}
+        ${cell('Preis-Einschätzung', (p) => ratingPill(p.priceRating.rating, p.priceRating.isAllTimeLow))}
+        ${cell('Bewertung', (p) => `${stars(p.rating)} ${p.rating}`)}
+        ${cell('Händler', (p) => p.offers.length)}
+        ${cell('Verfügbar', (p) => p.offers.some((o) => o.inStock) ? '✅' : '⏳')}
+        ${specKeys.map((k) => cell(k, (p) => esc(p.specs[k] ?? '–'))).join('')}
+      </tbody>
+    </table></div>`;
+  document.getElementById('cmp-clear-page').addEventListener('click', () => { setCompare([]); viewCompare(); });
+  app.querySelectorAll('[data-compare]').forEach((b) => b.addEventListener('click', () => setTimeout(viewCompare, 0)));
 }
 
 async function viewMerchants() {
@@ -434,6 +524,12 @@ document.addEventListener('click', async (e) => {
     wish.textContent = '♥';
     refreshWishlistBadge();
   }
+  const cmp = e.target.closest('[data-compare]');
+  if (cmp) {
+    e.preventDefault();
+    toggleCompare(cmp.dataset.compare);
+    syncCompareBtn(cmp);
+  }
   const link = e.target.closest('[data-link]');
   if (link && link.getAttribute('href').startsWith('#')) hideSuggestions();
 });
@@ -502,6 +598,7 @@ async function route() {
   try {
     if (path.startsWith('product/')) return await viewProduct(path.split('/')[1]);
     if (path === 'deals') return await viewDeals();
+    if (path === 'vergleich') return await viewCompare(params);
     if (path === 'haendler') return await viewMerchants();
     if (path === 'faq') return viewFaq();
     if (path === 'wishlist') return await viewWishlist();
@@ -511,6 +608,8 @@ async function route() {
     return await viewCatalog(params);
   } catch (e) {
     app.innerHTML = emptyState('Etwas ist schiefgelaufen: ' + e.message);
+  } finally {
+    renderCompareBar();
   }
 }
 window.addEventListener('hashchange', route);

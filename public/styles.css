@@ -213,5 +213,16 @@ table.offers tr.best td { background: color-mix(in srgb, var(--good) 10%, transp
   border: 1px solid var(--good); margin: 1rem 0; }
 .spinner { text-align: center; padding: 3rem; color: var(--muted); }
 
+/* ---- Compare ---- */
+.compare-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 70;
+  display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;
+  background: var(--surface); border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 10px rgba(0,0,0,.12); padding: .75rem 1rem; font-weight: 600;
+}
+.card-actions .compare-btn.active { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
+.compare-table th a { display: block; max-width: 180px; }
+.compare-table td, .compare-table th { vertical-align: top; min-width: 130px; }
+
 .skip-link { position: absolute; left: -999px; }
 .skip-link:focus { left: 1rem; top: 1rem; background: var(--surface); padding: .5rem; z-index: 100; }

@@ -31,7 +31,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 14. ✅ Verfügbarkeit pro Händler anzeigen (auf Lager / Lieferzeit)
 15. ⬜ Preis pro Einheit (z. B. € pro Kette/Reifen) berechnen
 16. ✅ Direktlink zum Angebot beim Händler
-17. ⬜ Mehrere Produkte nebeneinander vergleichen
+17. ✅ Mehrere Produkte nebeneinander vergleichen (inkl. teilbarem Link)
 18. ⬜ Gebraucht- vs. Neupreis vergleichen
 19. ⬜ Währungsumrechnung für ausländische Shops
 20. ✅ Hinweis auf Versandkostenfreigrenze / Mindestbestellwert (Gutscheine)
@@ -42,7 +42,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 22. ✅ Rabatt in Prozent zum Normalpreis anzeigen
 23. ✅ Sale-/Restposten-Bereich (Filter „Nur Angebote" + Deals-Seite)
 24. ✅ Gutschein- und Rabattcodes pro Händler
-25. ⬜ Tagesangebote / "Deal des Tages"
+25. ✅ "Deal des Tages" auf der Deals-Seite
 26. ⬜ Saisonale Aktionen (Black Friday, Winterschlussverkauf)
 27. ⬜ Bundle-Angebote (Rad + Zubehör)
 28. ✅ Markierung "Tiefstpreis" bei historischem Tiefststand
