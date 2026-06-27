@@ -32,22 +32,31 @@ function nextId() {
 }
 
 // --- Price alerts ---------------------------------------------------------
-export function addAlert({ user = 'demo', productId, targetPrice }) {
+// type: 'target'  -> notify when lowest price <= targetPrice
+//       'drop'    -> notify on any drop below the price at creation time
+//       'restock' -> notify when the product is back in stock
+const ALERT_TYPES = ['target', 'drop', 'restock'];
+
+export function addAlert({ user = 'demo', productId, targetPrice, type = 'target' }) {
   const product = getById(productId);
   if (!product) throw new Error('Produkt nicht gefunden');
+  if (!ALERT_TYPES.includes(type)) throw new Error('Unbekannter Alarm-Typ');
+  if (type === 'target' && !(Number(targetPrice) > 0)) throw new Error('targetPrice erforderlich');
   const state = read();
   const alert = {
     id: nextId(),
     user,
     productId: Number(productId),
     productName: product.name,
-    targetPrice: Number(targetPrice),
+    type,
+    targetPrice: type === 'target' ? Number(targetPrice) : null,
+    baselinePrice: product.lowestPrice, // reference for 'drop'
+    baselineInStock: product.inStock, // reference for 'restock'
     createdAt: '2026-06-27',
-    triggered: product.lowestPrice <= Number(targetPrice),
   };
   state.alerts.push(alert);
   write(state);
-  return alert;
+  return decorate(alert);
 }
 
 export function listAlerts(user = 'demo') {
@@ -62,16 +71,26 @@ export function deleteAlert(user, id) {
   return state.alerts.length < before;
 }
 
-// Re-evaluates an alert against the current lowest price.
+// Re-evaluates an alert against the current product state.
 function decorate(alert) {
   const product = getById(alert.productId);
   const current = product ? product.lowestPrice : null;
-  return {
-    ...alert,
-    currentPrice: current,
-    triggered: current != null && current <= alert.targetPrice,
-    distance: current != null ? Math.round((current - alert.targetPrice) * 100) / 100 : null,
-  };
+  const inStock = product ? product.inStock : false;
+  let triggered = false;
+  let label = '';
+  if (current != null) {
+    if (alert.type === 'restock') {
+      triggered = !alert.baselineInStock && inStock;
+      label = triggered ? 'Wieder verfügbar' : 'wartet auf Verfügbarkeit';
+    } else if (alert.type === 'drop') {
+      triggered = current < alert.baselinePrice;
+      label = triggered ? `gefallen um ${Math.round((alert.baselinePrice - current) * 100) / 100} €` : 'noch kein Rückgang';
+    } else {
+      triggered = current <= alert.targetPrice;
+      label = triggered ? 'Wunschpreis erreicht' : `${Math.round((current - alert.targetPrice) * 100) / 100} € über Ziel`;
+    }
+  }
+  return { ...alert, currentPrice: current, inStock, triggered, statusLabel: label };
 }
 
 // Returns the alerts that are currently satisfied (would fire a notification).

@@ -292,8 +292,13 @@ async function viewProduct(id) {
         <div class="panel" style="margin-top:1rem">
           <h2 style="font-size:1rem">🔔 Preisalarm setzen</h2>
           <p class="muted" style="margin:.2rem 0 .6rem">Benachrichtigung, sobald der Preis unter deinen Wunschpreis fällt.</p>
-          <form id="alert-form" style="display:flex;gap:.5rem">
-            <input type="number" id="alert-price" placeholder="Wunschpreis €" value="${Math.floor(p.lowestPrice * 0.9)}" min="1" style="flex:1;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
+          <form id="alert-form" style="display:flex;flex-wrap:wrap;gap:.5rem">
+            <select id="alert-type" style="padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+              <option value="target">Wunschpreis</option>
+              <option value="drop">Jede Preissenkung</option>
+              <option value="restock">Wieder verfügbar</option>
+            </select>
+            <input type="number" id="alert-price" placeholder="Wunschpreis €" value="${Math.floor(p.lowestPrice * 0.9)}" min="1" style="flex:1;min-width:120px;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
             <button class="btn" type="submit">Alarm anlegen</button>
           </form>
           <p id="alert-feedback" class="muted" style="margin:.5rem 0 0"></p>
@@ -334,14 +339,22 @@ async function viewProduct(id) {
     } catch { /* user cancelled share */ }
   });
 
+  const alertType = document.getElementById('alert-type');
+  const alertPrice = document.getElementById('alert-price');
+  alertType.addEventListener('change', () => { alertPrice.style.display = alertType.value === 'target' ? '' : 'none'; });
   document.getElementById('alert-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const targetPrice = Number(document.getElementById('alert-price').value);
-    const r = await send('POST', '/alerts', { productId: p.id, targetPrice });
+    const type = alertType.value;
+    const targetPrice = type === 'target' ? Number(alertPrice.value) : undefined;
+    const r = await send('POST', '/alerts', { productId: p.id, type, targetPrice });
     const fb = document.getElementById('alert-feedback');
-    fb.textContent = r.triggered
-      ? `✅ Preisalarm aktiv – der aktuelle Preis liegt bereits unter ${euro(targetPrice)}!`
-      : `✅ Preisalarm angelegt. Wir benachrichtigen dich, sobald der Preis ${euro(targetPrice)} erreicht.`;
+    if (r.error) { fb.textContent = '⚠️ ' + r.error; return; }
+    const msg = {
+      target: r.triggered ? `✅ Aktiv – der Preis liegt bereits unter ${euro(targetPrice)}!` : `✅ Angelegt. Wir benachrichtigen dich, sobald der Preis ${euro(targetPrice)} erreicht.`,
+      drop: '✅ Angelegt. Wir benachrichtigen dich bei jeder Preissenkung.',
+      restock: '✅ Angelegt. Wir benachrichtigen dich, sobald das Produkt wieder verfügbar ist.',
+    };
+    fb.textContent = msg[type];
   });
 }
 
@@ -386,19 +399,20 @@ async function viewWishlist() {
 async function viewAlerts() {
   app.innerHTML = spinner();
   const data = await api('/alerts');
+  const typeLabel = { target: 'Wunschpreis', drop: 'Preissenkung', restock: 'Verfügbarkeit' };
   const rows = data.items.map((a) => `
     <tr>
       <td><a href="#/product/${a.productId}" data-link>${esc(a.productName)}</a></td>
-      <td>${euro(a.targetPrice)}</td>
+      <td>${esc(typeLabel[a.type] || a.type)}${a.type === 'target' ? `<br><span class="muted">${euro(a.targetPrice)}</span>` : ''}</td>
       <td>${a.currentPrice != null ? euro(a.currentPrice) : '–'}</td>
-      <td>${a.triggered ? '<span class="pill good">🔔 Ausgelöst</span>' : `<span class="pill warn">${a.distance > 0 ? euro(a.distance) + ' über Ziel' : 'aktiv'}</span>`}</td>
+      <td>${a.triggered ? `<span class="pill good">🔔 ${esc(a.statusLabel)}</span>` : `<span class="pill warn">${esc(a.statusLabel || 'aktiv')}</span>`}</td>
       <td><button class="btn secondary" data-delalert="${a.id}">Löschen</button></td>
     </tr>`).join('');
   app.innerHTML = `
     <div class="section-title"><h2>🔔 Meine Preisalarme</h2></div>
     ${data.items.length
       ? `<div class="panel"><div style="overflow-x:auto"><table class="offers">
-         <thead><tr><th>Produkt</th><th>Wunschpreis</th><th>Aktuell</th><th>Status</th><th></th></tr></thead>
+         <thead><tr><th>Produkt</th><th>Typ</th><th>Aktuell</th><th>Status</th><th></th></tr></thead>
          <tbody>${rows}</tbody></table></div></div>`
       : emptyState('Du hast noch keine Preisalarme. Lege einen auf einer Produktseite an.')}`;
   app.querySelectorAll('[data-delalert]').forEach((b) =>

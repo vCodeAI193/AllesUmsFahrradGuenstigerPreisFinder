@@ -55,8 +55,8 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 32. ✅ Anzeige von Höchst-, Tiefst- und Durchschnittspreis
 33. ✅ Einschätzung "guter Preis / schlechter Preis"
 34. ✅ Preisalarm bei Erreichen eines Wunschpreises
-35. ⬜ Benachrichtigung bei jeder Preissenkung
-36. ⬜ Benachrichtigung bei Wiederverfügbarkeit
+35. ✅ Benachrichtigung bei jeder Preissenkung (Alarm-Typ)
+36. ✅ Benachrichtigung bei Wiederverfügbarkeit (Alarm-Typ)
 37. ✅ Mehrere Preisalarme pro Nutzer verwalten
 38. ⬜ Benachrichtigung per E-Mail
 39. ⬜ Benachrichtigung per Push (App/Browser)

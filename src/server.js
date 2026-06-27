@@ -108,10 +108,11 @@ async function handleApi(req, res, url) {
     if (req.method === 'GET') return sendJson(res, 200, { items: store.listAlerts(user) });
     if (req.method === 'POST') {
       const body = await readBody(req);
-      if (!body.productId || body.targetPrice == null)
-        return sendJson(res, 400, { error: 'productId und targetPrice erforderlich' });
+      if (!body.productId) return sendJson(res, 400, { error: 'productId erforderlich' });
       try {
-        return sendJson(res, 201, store.addAlert({ user, productId: body.productId, targetPrice: body.targetPrice }));
+        return sendJson(res, 201, store.addAlert({
+          user, productId: body.productId, targetPrice: body.targetPrice, type: body.type,
+        }));
       } catch (e) {
         return sendJson(res, 400, { error: e.message });
       }

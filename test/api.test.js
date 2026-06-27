@@ -62,6 +62,29 @@ test('GET /api/export returns user data as a download', async () => {
   assert.ok('alerts' in body && 'wishlist' in body);
 });
 
+test('alert types: drop and restock are accepted without targetPrice', async () => {
+  for (const type of ['drop', 'restock']) {
+    const r = await fetch(base + '/api/alerts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-user': user },
+      body: JSON.stringify({ productId: 1, type }),
+    }).then((r) => r.json());
+    assert.equal(r.type, type);
+    assert.ok('triggered' in r);
+  }
+  // clean up
+  await fetch(`${base}/api/account?user=${user}`, { method: 'DELETE' });
+});
+
+test('alert with unknown type is rejected', async () => {
+  const res = await fetch(base + '/api/alerts', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-user': user },
+    body: JSON.stringify({ productId: 1, type: 'bogus' }),
+  });
+  assert.equal(res.status, 400);
+});
+
 test('POST /api/newsletter validates the email address', async () => {
   const bad = await fetch(base + '/api/newsletter', {
     method: 'POST', headers: { 'content-type': 'application/json' },
