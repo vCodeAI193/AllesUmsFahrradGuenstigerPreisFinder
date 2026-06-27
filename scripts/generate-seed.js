@@ -89,19 +89,29 @@ function ean() {
 }
 
 function buildPriceHistory(currentLowest) {
-  // 180 days of daily lowest prices ending at currentLowest, with a mild
-  // downward drift and occasional dips so the "good price" logic has signal.
+  // 180 days of daily lowest prices that fluctuate (mean-reverting) around a
+  // baseline slightly above the current price and end exactly at currentLowest.
+  // This keeps the current price at/below the average so "good price" / deal
+  // signals are realistic, without runaway drift or end-of-series spikes.
   const days = 180;
+  const baseline = currentLowest * between(1.04, 1.16);
   const history = [];
-  let price = currentLowest * between(1.05, 1.35);
+  let price = baseline;
   for (let d = days; d >= 0; d--) {
-    const drift = between(-0.012, 0.006); // slight downward tendency
-    price = price * (1 + drift);
-    if (chance(0.05)) price *= between(0.9, 0.97); // promo dip
+    const reversion = (baseline - price) * 0.08; // pull back toward baseline
+    const noise = baseline * between(-0.02, 0.02);
+    price = Math.max(baseline * 0.8, price + reversion + noise);
+    if (chance(0.05)) price *= between(0.93, 0.98); // occasional promo dip
     const date = new Date(Date.UTC(2026, 5, 27) - d * 86400000); // count back from 2026-06-27
     history.push({ date: date.toISOString().slice(0, 10), price: round2(price) });
   }
-  // pin the last point to the actual current lowest
+  // Ease the final few days down to the actual current lowest for a smooth end.
+  const tail = 6;
+  for (let i = 0; i < tail; i++) {
+    const idx = history.length - tail + i;
+    const t = (i + 1) / tail;
+    history[idx].price = round2(history[idx].price * (1 - t) + currentLowest * t);
+  }
   history[history.length - 1].price = round2(currentLowest);
   return history;
 }

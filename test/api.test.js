@@ -1,0 +1,66 @@
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { server } from '../src/server.js';
+
+let base;
+const user = 'test-' + process.pid; // isolate this run's store entries
+
+before(async () => {
+  await new Promise((resolve) => server.listen(0, resolve));
+  base = `http://localhost:${server.address().port}`;
+});
+after(() => server.close());
+
+const get = (p) => fetch(base + p).then((r) => r.json());
+
+test('GET /api/meta returns catalog metadata', async () => {
+  const meta = await get('/api/meta');
+  assert.equal(meta.currency, 'EUR');
+  assert.ok(meta.count > 0);
+});
+
+test('GET /api/products supports search + pagination', async () => {
+  const r = await get('/api/products?q=trek&pageSize=5');
+  assert.ok(Array.isArray(r.items));
+  assert.ok(r.pageSize === 5);
+});
+
+test('GET /api/products/:id returns offers; 404 for unknown', async () => {
+  const ok = await fetch(base + '/api/products/1');
+  assert.equal(ok.status, 200);
+  const missing = await fetch(base + '/api/products/999999');
+  assert.equal(missing.status, 404);
+});
+
+test('static frontend is served at /', async () => {
+  const res = await fetch(base + '/');
+  assert.equal(res.status, 200);
+  assert.match(await res.text(), /Günstiger-Preis-Finder/);
+});
+
+test('alert lifecycle: create, list, delete', async () => {
+  const created = await fetch(base + '/api/alerts', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-user': user },
+    body: JSON.stringify({ productId: 1, targetPrice: 1 }),
+  }).then((r) => r.json());
+  assert.ok(created.id);
+
+  const list = await get(`/api/alerts?user=${user}`);
+  assert.ok(list.items.some((a) => a.id === created.id));
+
+  const del = await fetch(`${base}/api/alerts/${created.id}?user=${user}`, { method: 'DELETE' }).then((r) => r.json());
+  assert.equal(del.deleted, true);
+});
+
+test('wishlist add then remove', async () => {
+  const add = await fetch(base + '/api/wishlist', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-user': user },
+    body: JSON.stringify({ productId: 2 }),
+  }).then((r) => r.json());
+  assert.ok(add.items.some((p) => p.id === 2));
+
+  const rem = await fetch(`${base}/api/wishlist/2?user=${user}`, { method: 'DELETE' }).then((r) => r.json());
+  assert.ok(!rem.items.some((p) => p.id === 2));
+});
