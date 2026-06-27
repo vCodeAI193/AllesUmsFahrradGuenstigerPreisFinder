@@ -53,6 +53,15 @@ test('alert lifecycle: create, list, delete', async () => {
   assert.equal(del.deleted, true);
 });
 
+test('GET /api/export returns user data as a download', async () => {
+  const res = await fetch(`${base}/api/export?user=${user}`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get('content-disposition') || '', /attachment/);
+  const body = await res.json();
+  assert.equal(body.user, user);
+  assert.ok('alerts' in body && 'wishlist' in body);
+});
+
 test('wishlist add then remove', async () => {
   const add = await fetch(base + '/api/wishlist', {
     method: 'POST',

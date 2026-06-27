@@ -62,3 +62,22 @@ test('facets expose categories and a price range', () => {
   assert.ok(f.categories.length >= 4);
   assert.ok(f.priceRange.min <= f.priceRange.max);
 });
+
+test('facets include new filterable dimensions', () => {
+  const f = data.facets();
+  for (const key of ['brakeTypes', 'gears', 'motors', 'countries', 'frameSizes']) {
+    assert.ok(Array.isArray(f[key]), `facet ${key} missing`);
+  }
+  assert.ok(f.countries.length > 0);
+});
+
+test('country filter keeps only products offered from that country', () => {
+  const country = data.facets().countries[0].value;
+  const r = data.query({ country, pageSize: 60 });
+  assert.ok(r.total > 0);
+  // re-fetch each product to confirm at least one offer matches the country
+  for (const item of r.items) {
+    const full = data.getById(item.id);
+    assert.ok(full.offers.some((o) => o.country === country));
+  }
+});

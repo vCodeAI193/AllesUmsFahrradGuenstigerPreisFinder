@@ -78,6 +78,10 @@ export function query(params = {}) {
   if (params.frameSize)
     items = items.filter((p) => p.specs.Rahmengröße === params.frameSize || p.specs.Größe === params.frameSize);
   if (params.brakeType) items = items.filter((p) => p.specs.Bremse === params.brakeType);
+  if (params.gears) items = items.filter((p) => String(p.specs.Gänge) === String(params.gears));
+  if (params.motor) items = items.filter((p) => p.specs.Motor === params.motor);
+  if (params.country)
+    items = items.filter((p) => p.offers.some((o) => o.country === params.country));
   if (params.minPrice != null) items = items.filter((p) => p.lowestPrice >= Number(params.minPrice));
   if (params.maxPrice != null) items = items.filter((p) => p.lowestPrice <= Number(params.maxPrice));
   if (params.inStock === true || params.inStock === 'true') items = items.filter((p) => p.inStock);
@@ -206,6 +210,15 @@ export function facets() {
     }
     return Object.entries(m).map(([value, n]) => ({ value, count: n })).sort((a, b) => b.count - a.count);
   };
+  // Countries are multi-valued per product (one per offer) -> count distinctly.
+  const countryMap = {};
+  for (const p of products) {
+    for (const c of new Set(p.offers.map((o) => o.country))) countryMap[c] = (countryMap[c] || 0) + 1;
+  }
+  const countries = Object.entries(countryMap)
+    .map(([value, n]) => ({ value, count: n }))
+    .sort((a, b) => b.count - a.count);
+
   return {
     categories: count((p) => p.category),
     types: count((p) => p.type),
@@ -214,6 +227,10 @@ export function facets() {
     materials: count((p) => p.specs.Material),
     wheelSizes: count((p) => p.specs.Laufradgröße),
     frameSizes: count((p) => p.specs.Rahmengröße || p.specs.Größe),
+    brakeTypes: count((p) => p.specs.Bremse),
+    gears: count((p) => p.specs.Gänge).sort((a, b) => Number(a.value) - Number(b.value)),
+    motors: count((p) => p.specs.Motor),
+    countries,
     priceRange: priceRange(products),
   };
 }

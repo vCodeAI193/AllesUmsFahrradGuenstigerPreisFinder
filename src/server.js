@@ -68,6 +68,9 @@ async function handleApi(req, res, url) {
       wheelSize: p.get('wheelSize'),
       frameSize: p.get('frameSize'),
       brakeType: p.get('brakeType'),
+      gears: p.get('gears'),
+      motor: p.get('motor'),
+      country: p.get('country'),
       minPrice: p.get('minPrice'),
       maxPrice: p.get('maxPrice'),
       inStock: p.get('inStock'),
@@ -120,6 +123,16 @@ async function handleApi(req, res, url) {
     return sendJson(res, ok ? 200 : 404, { deleted: ok });
   }
 
+  // GET /api/export — GDPR data export for the current user
+  if (req.method === 'GET' && path === '/api/export') {
+    const body = JSON.stringify(store.exportUserData(userOf(url, req)), null, 2);
+    res.writeHead(200, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Content-Disposition': 'attachment; filename="meine-daten.json"',
+    });
+    return res.end(body);
+  }
+
   // --- Wishlist ---
   if (path === '/api/wishlist') {
     const user = userOf(url, req);
@@ -154,7 +167,12 @@ async function serveStatic(req, res, url) {
     const info = await stat(filePath);
     if (info.isDirectory()) throw new Error('dir');
     const body = await readFile(filePath);
-    res.writeHead(200, { 'Content-Type': MIME[extname(filePath)] || 'application/octet-stream' });
+    const isHtml = extname(filePath) === '.html';
+    res.writeHead(200, {
+      'Content-Type': MIME[extname(filePath)] || 'application/octet-stream',
+      // HTML must stay fresh (SPA shell); other assets may be cached briefly.
+      'Cache-Control': isHtml ? 'no-cache' : 'public, max-age=3600',
+    });
     res.end(body);
   } catch {
     // SPA fallback to index.html for unknown non-API routes

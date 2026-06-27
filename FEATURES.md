@@ -65,12 +65,12 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 ## 5. Filter & Sortierung
 
 41. ✅ Filter nach Preisspanne
-42. 🔄 Filter nach Rahmengröße (API vorhanden, noch nicht im UI-Panel)
+42. ✅ Filter nach Rahmengröße
 43. ✅ Filter nach Laufradgröße (26", 27,5", 28", 29")
 44. ✅ Filter nach Material (Alu, Carbon, Stahl)
-45. ⬜ Filter nach Schaltungstyp/Gangzahl
-46. 🔄 Filter nach Bremsentyp (API vorhanden, noch nicht im UI-Panel)
-47. ⬜ Filter nach E-Bike-Motor/Akkukapazität
+45. ✅ Filter nach Gangzahl
+46. ✅ Filter nach Bremsentyp (Scheibe/Felge)
+47. ✅ Filter nach E-Bike-Motor
 48. ✅ Filter nach Farbe
 49. ✅ Filter nach Verfügbarkeit
 50. ✅ Sortierung nach Preis, Rabatt, Beliebtheit, Neuheit, Bewertung, Name
@@ -93,9 +93,9 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 61. 🔄 Anbindung mehrerer Händler (simuliert über Angebots-Datenmodell)
 62. ⬜ Web-Scraping für Shops ohne API (regelkonform)
 63. ⬜ Regelmäßige automatische Preisaktualisierung
-64. 🔄 Übersicht der angebundenen Händler (in Metadaten, ohne eigene Seite)
+64. ✅ Übersicht aller angebundenen Händler (eigene Seite)
 65. ✅ Händlerbewertung anzeigen
-66. ⬜ Filter nach Händlerland / Versand nach Deutschland
+66. ✅ Filter nach Händlerland
 67. 🔄 Affiliate-Link-Kennzeichnung (rel="nofollow", Affiliate-Flag)
 68. ⬜ Erkennung und Markierung von Fake-Rabatten
 69. ⬜ Monitoring fehlerhafter oder veralteter Feeds
@@ -111,7 +111,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 76. ⬜ Einstellbares Heimat-/Standardland für Versand
 77. ⬜ Profil mit bevorzugten Marken und Kategorien
 78. ⬜ Wunschlisten teilen
-79. ⬜ Datenexport und Account-Löschung (DSGVO)
+79. 🔄 Datenexport (DSGVO-JSON-Export; Account-Löschung offen)
 80. ⬜ Einstellbare Benachrichtigungs-Präferenzen
 
 ## 9. Community & Bewertungen
@@ -123,9 +123,9 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 85. ⬜ Reputationssystem für aktive Nutzer
 86. ⬜ Melde-Funktion für unpassende Inhalte
 87. ⬜ Kauf-Ratgeber und Blog-Artikel
-88. ⬜ FAQ und Glossar (Fahrrad-Fachbegriffe)
+88. ✅ FAQ und Glossar (Fahrrad-Fachbegriffe)
 89. ⬜ Newsletter mit den besten Wochen-Deals
-90. ⬜ Social-Media-Sharing von Angeboten
+90. ✅ Social-Media-Sharing / Teilen von Angeboten
 
 ## 10. Technik, Qualität & Betrieb
 
@@ -134,7 +134,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 93. ⬜ Mehrsprachigkeit (aktuell nur Deutsch)
 94. 🔄 Barrierefreiheit (ARIA-Labels, semantisches HTML; noch nicht auditiert)
 95. ✅ Dark Mode
-96. 🔄 Schnelle Ladezeiten (Lazy-Loading der Bilder; Caching noch offen)
+96. ✅ Schnelle Ladezeiten (Lazy-Loading, Cache-Header für Assets)
 97. ✅ JSON-/REST-API für externe Nutzung
 98. ✅ Automatisierte Tests und CI/CD-Pipeline
 99. ⬜ Monitoring, Logging und Fehler-Tracking

@@ -79,6 +79,17 @@ export function dueAlerts(user = 'demo') {
   return listAlerts(user).filter((a) => a.triggered);
 }
 
+// --- GDPR data export -----------------------------------------------------
+// Returns everything stored for a user, for transparency / portability.
+export function exportUserData(user = 'demo') {
+  return {
+    user,
+    exportedAt: '2026-06-27',
+    alerts: listAlerts(user),
+    wishlist: listWishlist(user),
+  };
+}
+
 // --- Wishlist -------------------------------------------------------------
 export function addToWishlist(user = 'demo', productId) {
   const product = getById(productId);

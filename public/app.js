@@ -163,6 +163,11 @@ function filterPanel(facets, params) {
     <div class="filter-group"><label>Marke</label><select data-filter="brand">${opt(facets.brands, params.brand)}</select></div>
     <div class="filter-group"><label>Material</label><select data-filter="material">${opt(facets.materials, params.material)}</select></div>
     <div class="filter-group"><label>Laufradgröße</label><select data-filter="wheelSize">${opt(facets.wheelSizes, params.wheelSize)}</select></div>
+    <div class="filter-group"><label>Rahmen-/Kleidergröße</label><select data-filter="frameSize">${opt(facets.frameSizes, params.frameSize)}</select></div>
+    <div class="filter-group"><label>Bremse</label><select data-filter="brakeType">${opt(facets.brakeTypes, params.brakeType)}</select></div>
+    <div class="filter-group"><label>Gänge</label><select data-filter="gears">${opt(facets.gears, params.gears)}</select></div>
+    <div class="filter-group"><label>E-Bike-Motor</label><select data-filter="motor">${opt(facets.motors, params.motor)}</select></div>
+    <div class="filter-group"><label>Händlerland</label><select data-filter="country">${opt(facets.countries, params.country)}</select></div>
     <div class="filter-group"><label>Farbe</label><select data-filter="color">${opt(facets.colors, params.color)}</select></div>
     <div class="filter-group">
       <label>Preis (€)</label>
@@ -241,6 +246,7 @@ async function viewProduct(id) {
         <div class="card-actions" style="display:flex;gap:.5rem;max-width:420px">
           <a class="btn" href="${esc(best.url)}" target="_blank" rel="noopener nofollow">Bestes Angebot öffnen</a>
           <button class="btn secondary" data-wish="${p.id}">♡ Merken</button>
+          <button class="btn secondary" id="share-btn" title="Angebot teilen">🔗 Teilen</button>
         </div>
         <div class="panel" style="margin-top:1rem">
           <h2 style="font-size:1rem">🔔 Preisalarm setzen</h2>
@@ -277,6 +283,15 @@ async function viewProduct(id) {
 
     ${similar.items.length ? `<div class="section-title"><h2>Ähnliche Produkte</h2></div><div class="grid">${similar.items.map(card).join('')}</div>` : ''}
   </div>`;
+
+  document.getElementById('share-btn').addEventListener('click', async () => {
+    const url = location.href;
+    const shareData = { title: p.name, text: `${p.name} ab ${euro(p.lowestPrice)}`, url };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else { await navigator.clipboard.writeText(url); alert('Link in die Zwischenablage kopiert:\n' + url); }
+    } catch { /* user cancelled share */ }
+  });
 
   document.getElementById('alert-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -337,10 +352,52 @@ async function viewAlerts() {
     b.addEventListener('click', async () => { await send('DELETE', '/alerts/' + b.dataset.delalert); viewAlerts(); }));
 }
 
+async function viewMerchants() {
+  app.innerHTML = spinner();
+  const meta = await api('/meta');
+  const rows = meta.merchants.map((m) => `
+    <tr>
+      <td><strong>${esc(m.name)}</strong></td>
+      <td>${stars(m.rating)} ${m.rating}</td>
+      <td>${esc(m.country)}</td>
+      <td>versandkostenfrei ab ${euro(m.freeShipFrom)}</td>
+      <td><a href="#/?country=${encodeURIComponent(m.country)}" data-link>Angebote aus ${esc(m.country)}</a></td>
+    </tr>`).join('');
+  app.innerHTML = `
+    <div class="section-title"><h2>🏬 Angebundene Händler</h2></div>
+    <div class="panel"><div style="overflow-x:auto"><table class="offers">
+      <thead><tr><th>Händler</th><th>Bewertung</th><th>Land</th><th>Versand</th><th></th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+      <p class="muted" style="margin-top:1rem">Insgesamt ${meta.count} Produkte. Die Daten sind ein Prototyp – echte Händler-Feeds folgen.</p>
+    </div>`;
+}
+
+const GLOSSARY = [
+  ['UVP', 'Unverbindliche Preisempfehlung des Herstellers – Referenz für den Rabatt.'],
+  ['Gravelbike', 'Vielseitiges Rad für Asphalt und Schotter, zwischen Renn- und Mountainbike.'],
+  ['Schaltung', 'System aus Schalthebel, Schaltwerk und Ritzeln zur Übersetzungswahl.'],
+  ['Scheibenbremse', 'Bremse, die auf eine Scheibe an der Nabe wirkt – stark und wetterunabhängig.'],
+  ['Wh (Wattstunden)', 'Maß für die Akkukapazität eines E-Bikes – mehr Wh = mehr Reichweite.'],
+  ['Laufradgröße', 'Durchmesser des Laufrads in Zoll (26", 27,5", 28", 29").'],
+];
+const FAQ = [
+  ['Sind die Preise echt?', 'Nein. Dieser Prototyp nutzt synthetische Beispieldaten. Die Struktur entspricht aber realen Händler-Feeds.'],
+  ['Wie funktioniert der Preisalarm?', 'Lege auf einer Produktseite einen Wunschpreis fest. Sobald der Preis darunter fällt, wird der Alarm als ausgelöst markiert.'],
+  ['Was bedeutet „Guter Preis"?', 'Der aktuelle Preis wird mit dem eigenen 6-Monats-Verlauf verglichen. Liegt er deutlich unter dem Durchschnitt, gilt er als guter Preis bzw. Tiefstpreis.'],
+  ['Wie werden meine Daten gespeichert?', 'Merkliste und Preisalarme liegen lokal. Über „Meine Daten exportieren" im Footer kannst du sie jederzeit als JSON herunterladen.'],
+];
+function viewFaq() {
+  app.innerHTML = `
+    <div class="section-title"><h2>❓ FAQ</h2></div>
+    <div class="panel">${FAQ.map(([q, a]) => `<details style="margin:.4rem 0"><summary style="cursor:pointer;font-weight:600">${esc(q)}</summary><p class="muted">${esc(a)}</p></details>`).join('')}</div>
+    <div class="section-title"><h2>📖 Glossar</h2></div>
+    <div class="panel"><ul class="specs" style="grid-template-columns:1fr">${GLOSSARY.map(([t, d]) => `<li style="flex-direction:column;align-items:flex-start"><span style="color:var(--text);font-weight:700">${esc(t)}</span><span>${esc(d)}</span></li>`).join('')}</ul></div>`;
+}
+
 // ---- Shared UI helpers ----
 const spinner = () => `<div class="spinner">⏳ Lädt …</div>`;
 const emptyState = (msg = 'Keine Produkte gefunden. Passe Suche oder Filter an.') => `<div class="empty"><p style="font-size:2rem">🔍</p><p>${esc(msg)}</p></div>`;
-function hasFilters(p) { return ['category', 'type', 'brand', 'material', 'wheelSize', 'color', 'minPrice', 'maxPrice', 'onSale', 'inStock'].some((k) => p[k]); }
+function hasFilters(p) { return ['category', 'type', 'brand', 'material', 'wheelSize', 'frameSize', 'brakeType', 'gears', 'motor', 'country', 'color', 'minPrice', 'maxPrice', 'onSale', 'inStock'].some((k) => p[k]); }
 
 // ---- Filter / sort wiring ----
 function navigateWith(params) {
@@ -445,6 +502,8 @@ async function route() {
   try {
     if (path.startsWith('product/')) return await viewProduct(path.split('/')[1]);
     if (path === 'deals') return await viewDeals();
+    if (path === 'haendler') return await viewMerchants();
+    if (path === 'faq') return viewFaq();
     if (path === 'wishlist') return await viewWishlist();
     if (path === 'alerts') return await viewAlerts();
     // default: catalog (home + search + filters)
