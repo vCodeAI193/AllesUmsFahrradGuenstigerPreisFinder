@@ -62,6 +62,30 @@ test('GET /api/export returns user data as a download', async () => {
   assert.ok('alerts' in body && 'wishlist' in body);
 });
 
+test('POST /api/newsletter validates the email address', async () => {
+  const bad = await fetch(base + '/api/newsletter', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'not-an-email' }),
+  });
+  assert.equal(bad.status, 400);
+  const ok = await fetch(base + '/api/newsletter', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: 'rad@fahrer.de' }),
+  }).then((r) => r.json());
+  assert.equal(ok.subscribed, true);
+});
+
+test('DELETE /api/account erases the user data', async () => {
+  await fetch(base + '/api/wishlist', {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-user': user },
+    body: JSON.stringify({ productId: 3 }),
+  });
+  const del = await fetch(`${base}/api/account?user=${user}`, { method: 'DELETE' }).then((r) => r.json());
+  assert.equal(del.deleted, true);
+  const wl = await get(`/api/wishlist?user=${user}`);
+  assert.equal(wl.items.length, 0);
+});
+
 test('wishlist add then remove', async () => {
   const add = await fetch(base + '/api/wishlist', {
     method: 'POST',

@@ -20,7 +20,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 6. ✅ Suche nach Modellname oder Artikelnummer (inkl. EAN)
 7. ⬜ Barcode-/EAN-Suche per Foto
 8. ⬜ Sprachsuche
-9. ⬜ Suchverlauf des Nutzers speichern
+9. ✅ Suchverlauf des Nutzers speichern
 10. ⬜ Gespeicherte Suchen mit Benachrichtigung bei neuen Treffern
 
 ## 2. Preisvergleich
@@ -81,7 +81,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 52. 🔄 Bildergalerie pro Produkt (aktuell ein generiertes Platzhalterbild)
 53. ✅ Normalisierung/Anreicherung der Produktdaten (Preis-Statistik etc.)
 54. ⬜ Zusammenführen identischer Produkte mehrerer Shops
-55. ⬜ Anzeige der Garantie-/Gewährleistungsinfos
+55. ✅ Anzeige der Garantie-/Gewährleistungsinfos
 56. ⬜ Größentabelle / Geometrie-Daten für Fahrräder
 57. ⬜ Kompatibilitätshinweise bei Komponenten
 58. ⬜ Anzeige von Energie-/Nachhaltigkeitsinfos
@@ -111,7 +111,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 76. ⬜ Einstellbares Heimat-/Standardland für Versand
 77. ⬜ Profil mit bevorzugten Marken und Kategorien
 78. ⬜ Wunschlisten teilen
-79. 🔄 Datenexport (DSGVO-JSON-Export; Account-Löschung offen)
+79. ✅ Datenexport und vollständige Account-Löschung (DSGVO)
 80. ⬜ Einstellbare Benachrichtigungs-Präferenzen
 
 ## 9. Community & Bewertungen
@@ -124,7 +124,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 86. ⬜ Melde-Funktion für unpassende Inhalte
 87. ⬜ Kauf-Ratgeber und Blog-Artikel
 88. ✅ FAQ und Glossar (Fahrrad-Fachbegriffe)
-89. ⬜ Newsletter mit den besten Wochen-Deals
+89. ✅ Newsletter-Anmeldung für die besten Wochen-Deals
 90. ✅ Social-Media-Sharing / Teilen von Angeboten
 
 ## 10. Technik, Qualität & Betrieb
@@ -137,5 +137,5 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 96. ✅ Schnelle Ladezeiten (Lazy-Loading, Cache-Header für Assets)
 97. ✅ JSON-/REST-API für externe Nutzung
 98. ✅ Automatisierte Tests und CI/CD-Pipeline
-99. ⬜ Monitoring, Logging und Fehler-Tracking
+99. 🔄 Request- & Fehler-Logging (Monitoring/Tracking offen)
 100. ⬜ Datenschutzkonforme Statistik / Analytics

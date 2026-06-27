@@ -403,6 +403,20 @@ async function viewAlerts() {
       : emptyState('Du hast noch keine Preisalarme. Lege einen auf einer Produktseite an.')}`;
   app.querySelectorAll('[data-delalert]').forEach((b) =>
     b.addEventListener('click', async () => { await send('DELETE', '/alerts/' + b.dataset.delalert); viewAlerts(); }));
+
+  app.insertAdjacentHTML('beforeend', `
+    <div class="panel" style="margin-top:1.5rem">
+      <h2 style="font-size:1rem">🔒 Datenschutz</h2>
+      <p class="muted" style="margin:.2rem 0 .6rem">Du kannst alle deine Daten (Merkliste & Preisalarme) exportieren oder unwiderruflich löschen.</p>
+      <a class="btn secondary" href="/api/export" download>Daten exportieren</a>
+      <button class="btn secondary" id="delete-account">Alle meine Daten löschen</button>
+    </div>`);
+  document.getElementById('delete-account').addEventListener('click', async () => {
+    if (!confirm('Wirklich alle deine Daten (Merkliste & Preisalarme) löschen?')) return;
+    await send('DELETE', '/account');
+    refreshWishlistBadge();
+    viewAlerts();
+  });
 }
 
 async function viewCompare(params = {}) {
@@ -549,11 +563,33 @@ const searchInput = document.getElementById('search-input');
 const suggestionsEl = document.getElementById('suggestions');
 let suggestTimer;
 
+// Recent searches (history), stored client-side.
+function recentSearches() {
+  try { return JSON.parse(localStorage.getItem('searchHistory') || '[]'); } catch { return []; }
+}
+function rememberSearch(q) {
+  if (!q) return;
+  const hist = [q, ...recentSearches().filter((x) => x.toLowerCase() !== q.toLowerCase())].slice(0, 8);
+  try { localStorage.setItem('searchHistory', JSON.stringify(hist)); } catch {}
+}
+function showRecent() {
+  const hist = recentSearches();
+  if (!hist.length) return;
+  suggestionsEl.innerHTML = `<li class="suggest-head" aria-disabled="true">Zuletzt gesucht</li>` +
+    hist.map((s) => `<li data-recent="1">${esc(s)}</li>`).join('');
+  suggestionsEl.hidden = false;
+  suggestionsEl.querySelectorAll('li[data-recent]').forEach((li) =>
+    li.addEventListener('click', () => { searchInput.value = li.textContent; hideSuggestions(); navigateWith({ q: li.textContent }); }));
+}
+
 searchForm.addEventListener('submit', (e) => {
   e.preventDefault();
+  const q = searchInput.value.trim();
+  rememberSearch(q);
   hideSuggestions();
-  navigateWith({ q: searchInput.value.trim() });
+  navigateWith({ q });
 });
+searchInput.addEventListener('focus', () => { if (searchInput.value.trim().length < 2) showRecent(); });
 searchInput.addEventListener('input', () => {
   clearTimeout(suggestTimer);
   const q = searchInput.value.trim();
@@ -564,11 +600,22 @@ searchInput.addEventListener('input', () => {
     suggestionsEl.innerHTML = data.items.map((s) => `<li>${esc(s)}</li>`).join('');
     suggestionsEl.hidden = false;
     suggestionsEl.querySelectorAll('li').forEach((li) =>
-      li.addEventListener('click', () => { searchInput.value = li.textContent; hideSuggestions(); navigateWith({ q: li.textContent }); }));
+      li.addEventListener('click', () => { searchInput.value = li.textContent; rememberSearch(li.textContent); hideSuggestions(); navigateWith({ q: li.textContent }); }));
   }, 160);
 });
 document.addEventListener('click', (e) => { if (!searchForm.contains(e.target)) hideSuggestions(); });
 function hideSuggestions() { suggestionsEl.hidden = true; suggestionsEl.innerHTML = ''; }
+
+// ---- Newsletter signup ----
+const newsletterForm = document.getElementById('newsletter-form');
+newsletterForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('newsletter-email').value.trim();
+  const fb = document.getElementById('newsletter-feedback');
+  const r = await send('POST', '/newsletter', { email });
+  if (r.subscribed) { fb.textContent = '✅ Danke! Du erhältst künftig die besten Deals.'; newsletterForm.reset(); }
+  else fb.textContent = '⚠️ ' + (r.error || 'Bitte gültige E-Mail eingeben.');
+});
 
 // ---- Theme toggle ----
 const themeToggle = document.getElementById('theme-toggle');

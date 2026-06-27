@@ -98,6 +98,8 @@ img { max-width: 100%; display: block; }
 }
 .suggestions li { padding: .5rem .6rem; border-radius: 8px; cursor: pointer; }
 .suggestions li:hover, .suggestions li[aria-selected="true"] { background: var(--surface-2); }
+.suggestions li.suggest-head { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--muted); cursor: default; background: none; padding-bottom: .15rem; }
 
 .icon-btn { background: none; border: 1px solid var(--border); border-radius: 8px;
   cursor: pointer; font-size: 1.05rem; padding: .3rem .5rem; color: var(--text); }
@@ -223,6 +225,11 @@ table.offers tr.best td { background: color-mix(in srgb, var(--good) 10%, transp
 .card-actions .compare-btn.active { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
 .compare-table th a { display: block; max-width: 180px; }
 .compare-table td, .compare-table th { vertical-align: top; min-width: 130px; }
+
+.newsletter { display: flex; flex-direction: column; gap: .4rem; margin: .5rem 0 1rem; max-width: 440px; }
+.newsletter-row { display: flex; gap: .5rem; }
+.newsletter input { flex: 1; padding: .5rem .7rem; border: 1px solid var(--border);
+  border-radius: 8px; background: var(--surface); color: var(--text); }
 
 .skip-link { position: absolute; left: -999px; }
 .skip-link:focus { left: 1rem; top: 1rem; background: var(--surface); padding: .5rem; z-index: 100; }

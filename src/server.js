@@ -123,6 +123,20 @@ async function handleApi(req, res, url) {
     return sendJson(res, ok ? 200 : 404, { deleted: ok });
   }
 
+  // DELETE /api/account — GDPR erasure of all data for the current user
+  if (req.method === 'DELETE' && path === '/api/account')
+    return sendJson(res, 200, store.deleteUserData(userOf(url, req)));
+
+  // POST /api/newsletter — subscribe an email address
+  if (req.method === 'POST' && path === '/api/newsletter') {
+    const body = await readBody(req);
+    try {
+      return sendJson(res, 201, store.subscribeNewsletter(body.email));
+    } catch (e) {
+      return sendJson(res, 400, { error: e.message });
+    }
+  }
+
   // GET /api/export — GDPR data export for the current user
   if (req.method === 'GET' && path === '/api/export') {
     const body = JSON.stringify(store.exportUserData(userOf(url, req)), null, 2);
@@ -187,12 +201,23 @@ async function serveStatic(req, res, url) {
   }
 }
 
+// Structured request logging (disabled during tests to keep output clean).
+const LOG = process.env.NODE_ENV !== 'test' && process.env.LOG !== 'off';
+function log(req, status, startedAt) {
+  if (!LOG) return;
+  const ms = Number(process.hrtime.bigint() - startedAt) / 1e6;
+  console.log(`${req.method} ${req.url} → ${status} (${ms.toFixed(1)}ms)`);
+}
+
 export const server = createServer(async (req, res) => {
+  const startedAt = process.hrtime.bigint();
+  res.on('finish', () => log(req, res.statusCode, startedAt));
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   try {
     if (url.pathname.startsWith('/api/')) return await handleApi(req, res, url);
     return await serveStatic(req, res, url);
   } catch (e) {
+    console.error('Request error:', e);
     sendJson(res, 500, { error: 'Interner Serverfehler', detail: String(e.message || e) });
   }
 });

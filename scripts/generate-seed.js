@@ -154,6 +154,8 @@ function specsFor(category, cfg, type) {
     }
   }
   if (category === 'Bekleidung' && cfg.frameSizes) specs.Größe = pick(cfg.frameSizes);
+  // Statutory warranty (Gewährleistung) is 24 months in the EU; some brands add more.
+  specs.Garantie = pick(['24 Monate', '24 Monate', '36 Monate', '60 Monate (Rahmen)']);
   return specs;
 }
 

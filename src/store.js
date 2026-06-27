@@ -90,6 +90,27 @@ export function exportUserData(user = 'demo') {
   };
 }
 
+// Deletes all stored data for a user (GDPR "right to erasure").
+export function deleteUserData(user = 'demo') {
+  const state = read();
+  state.alerts = state.alerts.filter((a) => a.user !== user);
+  delete state.wishlist[user];
+  write(state);
+  return { deleted: true };
+}
+
+// --- Newsletter -----------------------------------------------------------
+export function subscribeNewsletter(email) {
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) throw new Error('Ungültige E-Mail-Adresse');
+  const state = read();
+  state.newsletter = state.newsletter || [];
+  if (!state.newsletter.includes(email)) {
+    state.newsletter.push(email);
+    write(state);
+  }
+  return { subscribed: true, email };
+}
+
 // --- Wishlist -------------------------------------------------------------
 export function addToWishlist(user = 'demo', productId) {
   const product = getById(productId);
