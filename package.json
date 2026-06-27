@@ -1,0 +1,23 @@
+{
+  "name": "alles-ums-fahrrad-guenstiger-preis-finder",
+  "version": "0.1.0",
+  "description": "Alle günstigen Preise und Angebote rund ums Fahrrad an einem Ort finden.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "seed": "node scripts/generate-seed.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "fahrrad",
+    "bike",
+    "preisvergleich",
+    "deals",
+    "angebote"
+  ],
+  "license": "MIT",
+  "private": true
+}
