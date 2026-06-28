@@ -226,6 +226,16 @@ table.offers tr.best td { background: color-mix(in srgb, var(--good) 10%, transp
 .compare-table th a { display: block; max-width: 180px; }
 .compare-table td, .compare-table th { vertical-align: top; min-width: 130px; }
 
+/* ---- Auth forms ---- */
+.auth-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .auth-grid { grid-template-columns: 1fr 1fr; } }
+.auth-grid form { display: flex; flex-direction: column; gap: .6rem; }
+.auth-grid label { display: flex; flex-direction: column; gap: .25rem; font-weight: 600; font-size: .9rem; }
+.auth-grid input { padding: .55rem .7rem; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg); color: var(--text); font-size: 1rem; font-weight: 400; }
+a.panel { color: var(--text); text-decoration: none; display: block; }
+a.panel:hover { border-color: var(--primary); text-decoration: none; }
+
 .newsletter { display: flex; flex-direction: column; gap: .4rem; margin: .5rem 0 1rem; max-width: 440px; }
 .newsletter-row { display: flex; gap: .5rem; }
 .newsletter input { flex: 1; padding: .5rem .7rem; border: 1px solid var(--border);

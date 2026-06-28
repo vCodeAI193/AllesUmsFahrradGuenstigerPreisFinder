@@ -34,7 +34,9 @@ scripts/generate-seed.js   Deterministischer Generator für Beispieldaten
 data/products.json         Generierter Produktkatalog (Quelle der Wahrheit)
 src/price.js               Preis-Analytik (Statistik, "guter Preis", bestes Angebot)
 src/data.js                Such-/Filter-/Sortier-/Facetten-Schicht
-src/store.js               Persistenz für Merkliste & Preisalarme (data/store.json)
+src/db.js                  Zentraler JSON-Datei-Store (data/store.json)
+src/store.js               Merkliste, Preisalarme, Newsletter
+src/auth.js                Nutzerkonten: Registrierung/Login (scrypt), Sessions
 src/server.js              Zero-Dependency HTTP-Server: JSON-API + Static-Hosting
 public/                    Frontend (HTML/CSS/Vanilla-JS-SPA, Hash-Routing)
 test/                      Unit- & API-Integrationstests (node:test)
@@ -52,7 +54,19 @@ test/                      Unit- & API-Integrationstests (node:test)
 | `GET /api/deals` | Top-Deals nach Rabatt |
 | `GET /api/suggest?q=` | Autovervollständigung |
 | `GET/POST/DELETE /api/wishlist` | Merkliste verwalten |
-| `GET/POST/DELETE /api/alerts` | Preisalarme verwalten |
+| `GET/POST/DELETE /api/alerts` | Preisalarme verwalten (Typen: `target`, `drop`, `restock`) |
+| `POST /api/auth/register` · `login` · `logout` | Konto erstellen / an- / abmelden |
+| `GET/PATCH /api/auth/me` | Eigenes Profil lesen / Anzeigename ändern |
+| `GET /api/export` · `DELETE /api/account` | DSGVO-Export / vollständige Löschung |
+
+### Nutzerkonten
+
+Echte Konten mit sicherem Passwort-Hashing (`node:crypto` scrypt + Salt) und
+opaken Session-Tokens. Nach `register`/`login` gibt die API ein `token` zurück;
+der Client sendet es als `Authorization: Bearer <token>`. Ohne Token funktioniert
+die App im Gastmodus (Merkliste/Alarme nur lokal). Konten und Sessions liegen –
+wie Merkliste/Alarme – in `data/store.json` (gitignored), zentral verwaltet über
+`src/db.js`.
 
 Wichtige Query-Parameter für `GET /api/products`: `q`, `category`, `type`,
 `brand`, `material`, `wheelSize`, `color`, `minPrice`, `maxPrice`, `onSale`,

@@ -7,6 +7,7 @@ import { dirname, join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as data from './data.js';
 import * as store from './store.js';
+import * as auth from './auth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const publicDir = join(__dirname, '..', 'public');
@@ -41,7 +42,18 @@ async function readBody(req) {
   }
 }
 
+function bearer(req) {
+  const h = req.headers['authorization'] || '';
+  return h.startsWith('Bearer ') ? h.slice(7) : null;
+}
+
+// Resolves the acting user id: the authenticated account email when a valid
+// session token is present, otherwise a guest id (x-user header / ?user=, or
+// 'demo'). This keeps the app usable for guests while binding data to accounts
+// once logged in.
 function userOf(url, req) {
+  const email = auth.emailFromToken(bearer(req));
+  if (email) return email;
   return url.searchParams.get('user') || req.headers['x-user'] || 'demo';
 }
 
@@ -49,6 +61,30 @@ function userOf(url, req) {
 async function handleApi(req, res, url) {
   const path = url.pathname;
   const p = url.searchParams;
+
+  // --- Authentication ---
+  if (req.method === 'POST' && path === '/api/auth/register') {
+    const body = await readBody(req);
+    try { return sendJson(res, 201, auth.register(body)); }
+    catch (e) { return sendJson(res, 400, { error: e.message }); }
+  }
+  if (req.method === 'POST' && path === '/api/auth/login') {
+    const body = await readBody(req);
+    try { return sendJson(res, 200, auth.login(body)); }
+    catch (e) { return sendJson(res, 401, { error: e.message }); }
+  }
+  if (req.method === 'POST' && path === '/api/auth/logout')
+    return sendJson(res, 200, auth.logout(bearer(req)));
+  if (path === '/api/auth/me') {
+    const email = auth.emailFromToken(bearer(req));
+    if (!email) return sendJson(res, 401, { error: 'Nicht angemeldet' });
+    if (req.method === 'GET') return sendJson(res, 200, auth.getProfile(email));
+    if (req.method === 'PATCH') {
+      const body = await readBody(req);
+      try { return sendJson(res, 200, auth.updateProfile(email, body)); }
+      catch (e) { return sendJson(res, 400, { error: e.message }); }
+    }
+  }
 
   // GET /api/meta
   if (req.method === 'GET' && path === '/api/meta') return sendJson(res, 200, data.meta());
@@ -125,8 +161,13 @@ async function handleApi(req, res, url) {
   }
 
   // DELETE /api/account — GDPR erasure of all data for the current user
-  if (req.method === 'DELETE' && path === '/api/account')
-    return sendJson(res, 200, store.deleteUserData(userOf(url, req)));
+  if (req.method === 'DELETE' && path === '/api/account') {
+    const id = userOf(url, req);
+    store.deleteUserData(id);
+    const email = auth.emailFromToken(bearer(req));
+    if (email) auth.deleteAccount(email); // also remove the account + sessions
+    return sendJson(res, 200, { deleted: true });
+  }
 
   // POST /api/newsletter — subscribe an email address
   if (req.method === 'POST' && path === '/api/newsletter') {

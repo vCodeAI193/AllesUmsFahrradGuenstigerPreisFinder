@@ -1,29 +1,10 @@
-// Lightweight JSON-file persistence for user-generated data:
-// wishlists and price alerts. Keyed by a simple user token (no real auth in
-// this prototype). The file lives at data/store.json and is gitignored.
+// Persistence for user-generated data: wishlists, price alerts, newsletter.
+// Keyed by user id (account email when logged in, otherwise a guest id).
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { getById } from './data.js';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const storeFile = join(__dirname, '..', 'data', 'store.json');
+import { readState as read, writeState as write } from './db.js';
 
 let seq = 1;
-
-function read() {
-  if (!existsSync(storeFile)) return { alerts: [], wishlist: {} };
-  try {
-    return JSON.parse(readFileSync(storeFile, 'utf8'));
-  } catch {
-    return { alerts: [], wishlist: {} };
-  }
-}
-
-function write(state) {
-  writeFileSync(storeFile, JSON.stringify(state, null, 2));
-}
 
 function nextId() {
   const state = read();

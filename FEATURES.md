@@ -8,7 +8,7 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 > **Stand 2026-06-27:** Ein lauffähiger Prototyp deckt Suche, Preisvergleich,
 > Deals, Preisverlauf, Filter/Sortierung, Merkliste und Preisalarme ab
 > (siehe [`README.md`](README.md)). Die Daten sind synthetisch; echte
-> Händler-Anbindungen, Nutzerkonten und Benachrichtigungsversand stehen noch aus.
+> Händler-Anbindungen und Benachrichtigungsversand stehen noch aus.
 
 ## 1. Suche & Auffinden
 
@@ -103,10 +103,10 @@ Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) �
 
 ## 8. Nutzerkonto & Personalisierung
 
-71. ⬜ Registrierung und Login (aktuell Demo-Nutzer)
+71. ✅ Registrierung und Login (scrypt-Hashing, Session-Token)
 72. ⬜ Login über Drittanbieter (Google, Apple)
 73. ✅ Merkliste / Wunschliste
-74. 🔄 Persönliches Dashboard (Merkliste + Preisalarme als Seiten)
+74. ✅ Persönliches Dashboard (Konto-Übersicht mit Merkliste, Alarmen, Export)
 75. ⬜ Personalisierte Empfehlungen
 76. ⬜ Einstellbares Heimat-/Standardland für Versand
 77. ⬜ Profil mit bevorzugten Marken und Kategorien

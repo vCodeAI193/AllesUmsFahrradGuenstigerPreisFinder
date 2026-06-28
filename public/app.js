@@ -5,15 +5,24 @@ const app = document.getElementById('app');
 const euro = (n) => new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(n);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// ---- Auth session state ----
+let currentUser = null;
+function authToken() { try { return localStorage.getItem('token'); } catch { return null; } }
+function setToken(t) { try { t ? localStorage.setItem('token', t) : localStorage.removeItem('token'); } catch {} }
+function authHeaders() {
+  const t = authToken();
+  return t ? { authorization: 'Bearer ' + t } : { 'x-user': 'demo' };
+}
+
 async function api(path) {
-  const res = await fetch('/api' + path, { headers: { 'x-user': 'demo' } });
+  const res = await fetch('/api' + path, { headers: { ...authHeaders() } });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
 async function send(method, path, body) {
   const res = await fetch('/api' + path, {
     method,
-    headers: { 'content-type': 'application/json', 'x-user': 'demo' },
+    headers: { 'content-type': 'application/json', ...authHeaders() },
     body: body ? JSON.stringify(body) : undefined,
   });
   return res.json();
@@ -470,6 +479,108 @@ async function viewCompare(params = {}) {
   app.querySelectorAll('[data-compare]').forEach((b) => b.addEventListener('click', () => setTimeout(viewCompare, 0)));
 }
 
+// ---- Account: auth + profile ----
+async function refreshUser() {
+  if (!authToken()) { currentUser = null; renderAccountNav(); return null; }
+  try {
+    const me = await api('/auth/me');
+    currentUser = me.error ? null : me;
+  } catch { currentUser = null; }
+  if (!currentUser) setToken(null);
+  renderAccountNav();
+  return currentUser;
+}
+function renderAccountNav() {
+  const el = document.getElementById('account-nav');
+  if (!el) return;
+  el.innerHTML = currentUser
+    ? `<a href="#/konto" data-link title="Mein Konto">👤 ${esc(currentUser.name)}</a>`
+    : `<a href="#/konto" data-link>Anmelden</a>`;
+}
+
+async function doLogout() {
+  await send('POST', '/auth/logout');
+  setToken(null);
+  currentUser = null;
+  renderAccountNav();
+  refreshWishlistBadge();
+  location.hash = '#/';
+}
+
+function viewAccount() {
+  if (currentUser) return viewProfile();
+  // Login / registration forms
+  app.innerHTML = `
+    <div class="section-title"><h2>👤 Konto</h2></div>
+    <div class="layout" style="grid-template-columns:1fr;max-width:760px">
+      <div class="auth-grid">
+        <form id="login-form" class="panel">
+          <h2 style="font-size:1.1rem">Anmelden</h2>
+          <label>E-Mail<input type="email" name="email" required autocomplete="email" /></label>
+          <label>Passwort<input type="password" name="password" required autocomplete="current-password" /></label>
+          <button class="btn" type="submit">Anmelden</button>
+          <p class="form-msg muted"></p>
+        </form>
+        <form id="register-form" class="panel">
+          <h2 style="font-size:1.1rem">Neu registrieren</h2>
+          <label>Name<input type="text" name="name" autocomplete="name" placeholder="optional" /></label>
+          <label>E-Mail<input type="email" name="email" required autocomplete="email" /></label>
+          <label>Passwort<input type="password" name="password" required minlength="6" autocomplete="new-password" placeholder="mind. 6 Zeichen" /></label>
+          <button class="btn" type="submit">Konto erstellen</button>
+          <p class="form-msg muted"></p>
+        </form>
+      </div>
+    </div>
+    <p class="muted" style="max-width:760px">Ohne Konto kannst du die Seite als Gast nutzen; Merkliste und Preisalarme werden dann nur lokal gespeichert. Mit Konto sind sie an dein Profil gebunden.</p>`;
+
+  const handle = (formId, endpoint) => {
+    const form = document.getElementById(formId);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = Object.fromEntries(new FormData(form).entries());
+      const r = await send('POST', endpoint, payload);
+      if (r.token) {
+        setToken(r.token);
+        currentUser = r.user;
+        renderAccountNav();
+        refreshWishlistBadge();
+        location.hash = '#/konto';
+      } else {
+        form.querySelector('.form-msg').textContent = '⚠️ ' + (r.error || 'Fehler');
+      }
+    });
+  };
+  handle('login-form', '/auth/login');
+  handle('register-form', '/auth/register');
+}
+
+async function viewProfile() {
+  app.innerHTML = spinner();
+  const [wl, alerts] = await Promise.all([api('/wishlist'), api('/alerts')]);
+  app.innerHTML = `
+    <div class="section-title"><h2>👤 Mein Konto</h2><button class="btn secondary" id="logout-btn">Abmelden</button></div>
+    <div class="panel">
+      <p>Angemeldet als <strong>${esc(currentUser.email)}</strong> · Mitglied seit ${esc(currentUser.createdAt)}</p>
+      <form id="profile-form" style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap;margin-top:.5rem">
+        <label>Anzeigename<input type="text" name="name" value="${esc(currentUser.name)}" style="display:block;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" /></label>
+        <button class="btn" type="submit">Speichern</button>
+        <span class="form-msg muted"></span>
+      </form>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:1rem">
+      <a class="panel" href="#/wishlist" data-link><h2 style="margin:0;font-size:1.05rem">❤️ Merkliste</h2><p class="muted" style="margin:.3rem 0 0">${wl.items.length} Produkte</p></a>
+      <a class="panel" href="#/alerts" data-link><h2 style="margin:0;font-size:1.05rem">🔔 Preisalarme</h2><p class="muted" style="margin:.3rem 0 0">${alerts.items.length} aktiv</p></a>
+      <a class="panel" href="/api/export" download><h2 style="margin:0;font-size:1.05rem">⬇️ Daten exportieren</h2><p class="muted" style="margin:.3rem 0 0">DSGVO-Export als JSON</p></a>
+    </div>`;
+  document.getElementById('logout-btn').addEventListener('click', doLogout);
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = new FormData(e.target).get('name');
+    const r = await send('PATCH', '/auth/me', { name });
+    if (!r.error) { currentUser = r; renderAccountNav(); e.target.querySelector('.form-msg').textContent = '✅ Gespeichert'; }
+  });
+}
+
 async function viewMerchants() {
   app.innerHTML = spinner();
   const meta = await api('/meta');
@@ -558,6 +669,20 @@ document.addEventListener('click', async (e) => {
     toggleCompare(cmp.dataset.compare);
     syncCompareBtn(cmp);
   }
+  // Authenticated data export: a plain link cannot send the bearer token, so
+  // intercept and download via fetch with auth headers.
+  const exportLink = e.target.closest('a[href="/api/export"]');
+  if (exportLink) {
+    e.preventDefault();
+    const res = await fetch('/api/export', { headers: { ...authHeaders() } });
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'meine-daten.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
   const link = e.target.closest('[data-link]');
   if (link && link.getAttribute('href').startsWith('#')) hideSuggestions();
 });
@@ -662,6 +787,7 @@ async function route() {
     if (path === 'vergleich') return await viewCompare(params);
     if (path === 'haendler') return await viewMerchants();
     if (path === 'faq') return viewFaq();
+    if (path === 'konto') return viewAccount();
     if (path === 'wishlist') return await viewWishlist();
     if (path === 'alerts') return await viewAlerts();
     // default: catalog (home + search + filters)
@@ -677,6 +803,7 @@ window.addEventListener('hashchange', route);
 
 // ---- Boot ----
 (async function init() {
+  await refreshUser();
   refreshWishlistBadge();
   try {
     const meta = await api('/meta');
