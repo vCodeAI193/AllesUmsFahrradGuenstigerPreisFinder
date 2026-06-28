@@ -10,7 +10,8 @@ auf eine Merkliste setzen und Preisalarme anlegen.
 > Beispieldaten**. Preise, Händler und Verfügbarkeiten sind nicht real – die
 > Datenstruktur entspricht aber dem, was eine echte Händler-Anbindung liefern
 > würde. Siehe [`VISION.md`](VISION.md) für die Produktvision und
-> [`FEATURES.md`](FEATURES.md) für die Roadmap.
+> [`FEATURES.md`](FEATURES.md) für die Roadmap und [`BACKLOG.md`](BACKLOG.md) für
+200 weitere offene Feature-Ideen.
 
 ## Schnellstart
 

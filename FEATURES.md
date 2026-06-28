@@ -5,6 +5,8 @@ Die Features sind nach Themenbereichen gruppiert und durchnummeriert (1–100).
 
 Status-Legende: ⬜ offen · 🔄 teilweise (Logik/API vorhanden, UI begrenzt) · ✅ umgesetzt
 
+Weitere 200 offene Feature-Ideen stehen im [`BACKLOG.md`](BACKLOG.md).
+
 > **Stand 2026-06-27:** Ein lauffähiger Prototyp deckt Suche, Preisvergleich,
 > Deals, Preisverlauf, Filter/Sortierung, Merkliste und Preisalarme ab
 > (siehe [`README.md`](README.md)). Die Daten sind synthetisch; echte
