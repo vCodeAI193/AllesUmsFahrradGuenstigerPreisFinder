@@ -31,7 +31,7 @@ Weitere 200 offene Feature-Ideen stehen im [`BACKLOG.md`](BACKLOG.md).
 12. ✅ Günstigsten Preis hervorheben
 13. ✅ Gesamtpreis inkl. Versandkosten berechnen
 14. ✅ Verfügbarkeit pro Händler anzeigen (auf Lager / Lieferzeit)
-15. ⬜ Preis pro Einheit (z. B. € pro Kette/Reifen) berechnen
+15. ✅ Preis pro Einheit (€/Wh bei E-Bike-Akkus)
 16. ✅ Direktlink zum Angebot beim Händler
 17. ✅ Mehrere Produkte nebeneinander vergleichen (inkl. teilbarem Link)
 18. ⬜ Gebraucht- vs. Neupreis vergleichen
@@ -109,9 +109,9 @@ Weitere 200 offene Feature-Ideen stehen im [`BACKLOG.md`](BACKLOG.md).
 72. ⬜ Login über Drittanbieter (Google, Apple)
 73. ✅ Merkliste / Wunschliste
 74. ✅ Persönliches Dashboard (Konto-Übersicht mit Merkliste, Alarmen, Export)
-75. ⬜ Personalisierte Empfehlungen
-76. ⬜ Einstellbares Heimat-/Standardland für Versand
-77. ⬜ Profil mit bevorzugten Marken und Kategorien
+75. ✅ Personalisierte Empfehlungen ("Für dich" auf der Startseite)
+76. 🔄 Standardland als Profil-Präferenz (Speicherung; Anwendung folgt)
+77. ✅ Profil mit bevorzugten Marken und Kategorien
 78. ⬜ Wunschlisten teilen
 79. ✅ Datenexport und vollständige Account-Löschung (DSGVO)
 80. ⬜ Einstellbare Benachrichtigungs-Präferenzen

@@ -46,6 +46,32 @@ test('similar returns same category/type products excluding self', () => {
   assert.ok(sim.every((s) => s.id !== 1));
 });
 
+test('recommend filters by preferred brands/categories', () => {
+  const brand = data.facets().brands[0].value;
+  const rec = data.recommend({ brands: [brand] }, 50);
+  assert.ok(rec.length > 0);
+  assert.ok(rec.every((p) => p.brand === brand || p.category)); // brand match (category empty in this pref)
+  assert.ok(rec.every((p) => p.brand === brand));
+});
+
+test('recommend without prefs returns in-stock deals', () => {
+  const rec = data.recommend({}, 10);
+  assert.ok(rec.length > 0);
+  assert.ok(rec.every((p) => p.inStock));
+});
+
+test('byIds preserves order and drops unknown ids', () => {
+  const r = data.byIds([3, 1, 999999, 2]);
+  assert.deepEqual(r.map((p) => p.id), [3, 1, 2]);
+});
+
+test('e-bike products expose a €/Wh unit price', () => {
+  const ebike = data.query({ type: 'E-Bike', pageSize: 1 });
+  // summaries don't include unitPrice; check via full product
+  const full = data.getById(ebike.items[0].id);
+  assert.ok(full.unitPrice && full.unitPrice.unit === '€/Wh');
+});
+
 test('deals are discounted and in stock', () => {
   const d = data.deals(10);
   assert.ok(d.length > 0);

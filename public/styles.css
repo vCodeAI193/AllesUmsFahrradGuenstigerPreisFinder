@@ -236,6 +236,10 @@ table.offers tr.best td { background: color-mix(in srgb, var(--good) 10%, transp
 a.panel { color: var(--text); text-decoration: none; display: block; }
 a.panel:hover { border-color: var(--primary); text-decoration: none; }
 
+.prefs-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .prefs-grid { grid-template-columns: 1fr 1fr; } }
+.prefs-grid > label { display: flex; flex-direction: column; gap: .3rem; font-weight: 600; font-size: .9rem; }
+
 .newsletter { display: flex; flex-direction: column; gap: .4rem; margin: .5rem 0 1rem; max-width: 440px; }
 .newsletter-row { display: flex; gap: .5rem; }
 .newsletter input { flex: 1; padding: .5rem .7rem; border: 1px solid var(--border);

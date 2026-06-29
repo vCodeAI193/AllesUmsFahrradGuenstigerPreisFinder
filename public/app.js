@@ -68,6 +68,16 @@ function syncCompareBtn(btn) {
   btn.title = active ? 'Aus Vergleich entfernen' : 'Zum Vergleich hinzufügen';
 }
 
+// ---- Recently viewed products (client-side history) ----
+function getRecent() {
+  try { return JSON.parse(localStorage.getItem('recentlyViewed') || '[]'); } catch { return []; }
+}
+function recordRecent(id) {
+  id = Number(id);
+  const ids = [id, ...getRecent().filter((x) => x !== id)].slice(0, 12);
+  try { localStorage.setItem('recentlyViewed', JSON.stringify(ids)); } catch {}
+}
+
 // ---- Local image placeholder (no external network needed) ----
 const THUMB_COLORS = ['#0a7d4b', '#1d6fb8', '#b8860b', '#7a3ea8', '#c2410c', '#0f766e', '#9d174d'];
 function thumbFor(p) {
@@ -164,13 +174,17 @@ async function viewCatalog(params) {
   const qs = new URLSearchParams(params).toString();
   const data = await api('/products' + (qs ? '?' + qs : ''));
 
+  const isHome = !params.q && !hasFilters(params) && (Number(params.page) || 1) === 1;
   const hero = params.q || hasFilters(params) ? '' : heroBlock(facets);
+  let homeStrips = '';
+  if (isHome) homeStrips = await buildHomeStrips();
   const dym = data.didYouMean
     ? `<p class="notice">Keine Treffer für „${esc(params.q)}". Meintest du <a href="#/?q=${encodeURIComponent(data.didYouMean)}" data-link>${esc(data.didYouMean)}</a>?</p>`
     : '';
 
   app.innerHTML = `
     ${hero}
+    ${homeStrips}
     <div class="layout">
       ${filterPanel(facets, params)}
       <section>
@@ -190,6 +204,30 @@ async function viewCatalog(params) {
 
   wireFilters(params);
   wireSort(params);
+}
+
+// Builds the "Für dich" + "Zuletzt angesehen" rows for the home view.
+async function buildHomeStrips() {
+  let html = '';
+  try {
+    const foryou = await api('/foryou');
+    if (foryou.items.length) {
+      const title = foryou.personalized ? '✨ Für dich empfohlen' : '✨ Beliebte Empfehlungen';
+      html += `<div class="section-title"><h2>${title}</h2>${foryou.personalized ? '' : `<a href="#/konto" data-link class="muted" style="font-size:.85rem">Personalisieren →</a>`}</div>
+        <div class="grid">${foryou.items.slice(0, 8).map(card).join('')}</div>`;
+    }
+  } catch {}
+  const recent = getRecent();
+  if (recent.length) {
+    try {
+      const r = await api('/products/by-ids?ids=' + recent.join(','));
+      if (r.items.length) {
+        html += `<div class="section-title"><h2>🕘 Zuletzt angesehen</h2></div>
+          <div class="grid">${r.items.slice(0, 8).map(card).join('')}</div>`;
+      }
+    } catch {}
+  }
+  return html;
 }
 
 function heroBlock(facets) {
@@ -266,6 +304,7 @@ async function viewProduct(id) {
     app.innerHTML = emptyState('Produkt nicht gefunden.');
     return;
   }
+  recordRecent(p.id);
   const best = p.offers[0];
   const offerRows = p.offers.map((o, i) => `
     <tr class="${i === 0 ? 'best' : ''}">
@@ -289,6 +328,7 @@ async function viewProduct(id) {
         <h1>${esc(p.name)}</h1>
         <div class="meta">${stars(p.rating)} ${p.rating} · ${p.reviewCount} Bewertungen</div>
         <p class="big-price">${euro(p.lowestPrice)} ${ratingPill(p.priceRating.rating, p.priceRating.isAllTimeLow)}</p>
+        ${p.unitPrice ? `<p class="muted" style="margin-top:-.5rem">≈ ${euro(p.unitPrice.value)} ${esc(p.unitPrice.unit)} (${esc(p.unitPrice.label)})</p>` : ''}
         <p class="muted">
           ${p.discountPercent > 0 ? `<span class="rrp">UVP ${euro(p.rrp)}</span> · −${p.discountPercent}% · ` : ''}
           günstigster Anbieter: <strong>${esc(best.merchant)}</strong> (${euro(best.total)} inkl. Versand)
@@ -556,7 +596,14 @@ function viewAccount() {
 
 async function viewProfile() {
   app.innerHTML = spinner();
-  const [wl, alerts] = await Promise.all([api('/wishlist'), api('/alerts')]);
+  const [wl, alerts, facets] = await Promise.all([api('/wishlist'), api('/alerts'), api('/facets')]);
+  const prefs = currentUser.prefs || {};
+  const multi = (name, list, selected = []) =>
+    `<select name="${name}" multiple size="5" style="width:100%;padding:.4rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)">
+      ${list.map((f) => `<option value="${esc(f.value)}" ${selected.includes(f.value) ? 'selected' : ''}>${esc(f.value)}</option>`).join('')}
+    </select>`;
+  const countryOpts = ['<option value="">Keine Vorauswahl</option>',
+    ...facets.countries.map((c) => `<option value="${esc(c.value)}" ${prefs.country === c.value ? 'selected' : ''}>${esc(c.value)}</option>`)].join('');
   app.innerHTML = `
     <div class="section-title"><h2>👤 Mein Konto</h2><button class="btn secondary" id="logout-btn">Abmelden</button></div>
     <div class="panel">
@@ -565,6 +612,16 @@ async function viewProfile() {
         <label>Anzeigename<input type="text" name="name" value="${esc(currentUser.name)}" style="display:block;padding:.5rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" /></label>
         <button class="btn" type="submit">Speichern</button>
         <span class="form-msg muted"></span>
+      </form>
+    </div>
+    <div class="panel">
+      <h2 style="font-size:1.1rem">⚙️ Präferenzen</h2>
+      <p class="muted" style="margin:.2rem 0 .8rem">Wähle deine Lieblingsmarken und -kategorien für personalisierte Empfehlungen auf der Startseite.</p>
+      <form id="prefs-form" class="prefs-grid">
+        <label>Lieblingsmarken${multi('brands', facets.brands, prefs.brands || [])}</label>
+        <label>Lieblingskategorien${multi('categories', facets.categories, prefs.categories || [])}</label>
+        <label>Bevorzugtes Versandland<select name="country" style="width:100%;padding:.45rem;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)">${countryOpts}</select></label>
+        <div style="grid-column:1/-1;display:flex;gap:.5rem;align-items:center"><button class="btn" type="submit">Präferenzen speichern</button><span class="prefs-msg muted"></span></div>
       </form>
     </div>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:1rem">
@@ -578,6 +635,13 @@ async function viewProfile() {
     const name = new FormData(e.target).get('name');
     const r = await send('PATCH', '/auth/me', { name });
     if (!r.error) { currentUser = r; renderAccountNav(); e.target.querySelector('.form-msg').textContent = '✅ Gespeichert'; }
+  });
+  document.getElementById('prefs-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const prefs = { brands: fd.getAll('brands'), categories: fd.getAll('categories'), country: fd.get('country') || '' };
+    const r = await send('PATCH', '/auth/me', { prefs });
+    if (!r.error) { currentUser = r; e.target.querySelector('.prefs-msg').textContent = '✅ Präferenzen gespeichert'; }
   });
 }
 

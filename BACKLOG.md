@@ -22,11 +22,11 @@ die Box ankreuzen (`[x]`) und das Feature nach `FEATURES.md` überführen.
 - [ ] **B008** – Filter-Chips über der Trefferliste (entfernbar)
 - [ ] **B009** – Trending-Suchen / beliebte Suchbegriffe der Woche
 - [ ] **B010** – Suchergebnis-Teilen per Link mit allen aktiven Filtern
-- [ ] **B011** – Zuletzt angesehene Produkte als eigene Leiste
+- [x] **B011** – Zuletzt angesehene Produkte als eigene Leiste
 
 ## Preisvergleich & Preislogik
 
-- [ ] **B012** – Preis pro Einheit (€/kg, €/Stück, €/Wh) berechnen und anzeigen
+- [x] **B012** – Preis pro Einheit (€/kg, €/Stück, €/Wh) berechnen und anzeigen
 - [ ] **B013** – Gebraucht- vs. Neupreis je Produkt gegenüberstellen
 - [ ] **B014** – Live-Währungsumrechnung für ausländische Shops
 - [ ] **B015** – Gesamtkosten inkl. Zoll/Einfuhr für Drittland-Shops
@@ -123,8 +123,8 @@ die Box ankreuzen (`[x]`) und das Feature nach `FEATURES.md` überführen.
 
 ## Personalisierung & Empfehlungen
 
-- [ ] **B088** – Profil mit bevorzugten Marken und Kategorien
-- [ ] **B089** – Personalisierte Startseite nach Interessen
+- [x] **B088** – Profil mit bevorzugten Marken und Kategorien
+- [x] **B089** – Personalisierte Startseite nach Interessen
 - [ ] **B090** – Einstellbares Standardland/Region für Versand
 - [ ] **B091** – Empfehlungen „Kunden interessierten sich auch für"
 - [ ] **B092** – Budget-Profil mit passenden Vorschlägen

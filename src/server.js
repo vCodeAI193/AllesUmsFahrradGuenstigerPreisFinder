@@ -86,6 +86,10 @@ async function handleApi(req, res, url) {
     }
   }
 
+  // GET /api/health — liveness/readiness probe
+  if (req.method === 'GET' && path === '/api/health')
+    return sendJson(res, 200, { status: 'ok', products: data.meta().count });
+
   // GET /api/meta
   if (req.method === 'GET' && path === '/api/meta') return sendJson(res, 200, data.meta());
 
@@ -120,6 +124,12 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, result);
   }
 
+  // GET /api/products/by-ids?ids=1,2,3 — summaries in the given order
+  if (req.method === 'GET' && path === '/api/products/by-ids') {
+    const ids = (p.get('ids') || '').split(',').map(Number).filter((n) => n > 0);
+    return sendJson(res, 200, { items: data.byIds(ids) });
+  }
+
   // GET /api/products/:id  and  /api/products/:id/similar
   const productMatch = path.match(/^\/api\/products\/(\d+)(\/similar)?$/);
   if (req.method === 'GET' && productMatch) {
@@ -133,6 +143,13 @@ async function handleApi(req, res, url) {
   // GET /api/deals
   if (req.method === 'GET' && path === '/api/deals')
     return sendJson(res, 200, { items: data.deals(Number(p.get('limit')) || 24) });
+
+  // GET /api/foryou — personalized recommendations from the account's prefs
+  if (req.method === 'GET' && path === '/api/foryou') {
+    const email = auth.emailFromToken(bearer(req));
+    const prefs = email ? (auth.getProfile(email)?.prefs || {}) : {};
+    return sendJson(res, 200, { items: data.recommend(prefs), personalized: !!(prefs.brands?.length || prefs.categories?.length) });
+  }
 
   // GET /api/suggest
   if (req.method === 'GET' && path === '/api/suggest')

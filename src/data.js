@@ -32,7 +32,19 @@ function enrich(p) {
     discountPercent: discountVsRrp(p.rrp, best.total),
     inStock: p.offers.some((o) => o.inStock),
     merchantCount: p.offers.length,
+    unitPrice: unitPriceOf(p, best.total),
   };
+}
+
+// Derives a price-per-unit where it makes sense (currently €/Wh for e-bikes
+// with a battery spec). Returns { value, unit, label } or null.
+function unitPriceOf(p, total) {
+  const akku = p.specs && p.specs.Akku; // e.g. "500 Wh"
+  if (akku) {
+    const wh = parseFloat(String(akku));
+    if (wh > 0) return { value: Math.round((total / wh) * 100) / 100, unit: '€/Wh', label: `pro Wh Akkukapazität` };
+  }
+  return null;
 }
 
 // --- Normalisation for search --------------------------------------------
@@ -140,6 +152,13 @@ export function getById(id) {
   return { ...p, offers: [...p.offers].sort((a, b) => a.total - b.total) };
 }
 
+// Returns card summaries for a list of ids, preserving the given order.
+export function byIds(ids = []) {
+  const { products } = load();
+  const map = new Map(products.map((p) => [p.id, p]));
+  return ids.map((id) => map.get(Number(id))).filter(Boolean).map(toSummary);
+}
+
 export function similar(id, limit = 6) {
   const { products } = load();
   const p = products.find((x) => x.id === Number(id));
@@ -159,6 +178,29 @@ export function deals(limit = 24) {
     .sort((a, b) => b.discountPercent - a.discountPercent)
     .slice(0, limit)
     .map(toSummary);
+}
+
+// Personalized recommendations from a user's preferences.
+// prefs: { brands?: string[], categories?: string[] }. Falls back to the best
+// in-stock deals when no preferences are given.
+export function recommend(prefs = {}, limit = 12) {
+  const { products } = load();
+  const brands = new Set(prefs.brands || []);
+  const categories = new Set(prefs.categories || []);
+  let pool = products.filter((p) => p.inStock);
+  if (brands.size || categories.size) {
+    pool = pool.filter((p) => brands.has(p.brand) || categories.has(p.category));
+  }
+  return pool
+    .sort((a, b) =>
+      (b.discountPercent - a.discountPercent) ||
+      (rank(b.priceRating.rating) - rank(a.priceRating.rating)) ||
+      (b.rating - a.rating))
+    .slice(0, limit)
+    .map(toSummary);
+}
+function rank(r) {
+  return { bestprice: 3, 'guter Preis': 2, durchschnittlich: 1, 'eher teuer': 0 }[r] ?? 1;
 }
 
 // Autocomplete suggestions from product names + brands.
