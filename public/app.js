@@ -80,11 +80,11 @@ function recordRecent(id) {
 
 // ---- Local image placeholder (no external network needed) ----
 const THUMB_COLORS = ['#0a7d4b', '#1d6fb8', '#b8860b', '#7a3ea8', '#c2410c', '#0f766e', '#9d174d'];
-function thumbFor(p) {
-  const hash = String(p.brand + p.type).split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const c1 = THUMB_COLORS[hash % THUMB_COLORS.length];
-  const c2 = THUMB_COLORS[(hash + 3) % THUMB_COLORS.length];
-  const label = esc(`${p.brand} · ${p.type}`);
+function makeImage(p, variant = 0, caption) {
+  const base = String(p.brand + p.type).split('').reduce((a, c) => a + c.charCodeAt(0), 0) + variant * 5;
+  const c1 = THUMB_COLORS[base % THUMB_COLORS.length];
+  const c2 = THUMB_COLORS[(base + 3) % THUMB_COLORS.length];
+  const label = esc(caption || `${p.brand} · ${p.type}`);
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'>
     <defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
     <stop offset='0' stop-color='${c1}'/><stop offset='1' stop-color='${c2}'/></linearGradient></defs>
@@ -93,6 +93,12 @@ function thumbFor(p) {
     <text x='300' y='300' font-family='system-ui,sans-serif' font-size='30' font-weight='700' text-anchor='middle' fill='#fff'>${label}</text>
   </svg>`;
   return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+function thumbFor(p) { return makeImage(p, 0); }
+// Multiple synthetic "views" for the product gallery.
+function galleryFor(p) {
+  return ['Seitenansicht', 'Detailansicht', 'Frontansicht', 'Rückansicht']
+    .map((view, i) => ({ uri: makeImage(p, i, `${p.brand} · ${view}`), label: view }));
 }
 
 // ---- Rating pill helper ----
@@ -196,6 +202,7 @@ async function viewCatalog(params) {
             </select>
           </label>
         </div>
+        ${filterChips(params)}
         ${dym}
         ${data.items.length ? `<div class="grid">${data.items.map(card).join('')}</div>` : emptyState()}
         ${pagination(data)}
@@ -228,6 +235,22 @@ async function buildHomeStrips() {
     } catch {}
   }
   return html;
+}
+
+// Removable chips for the currently active filters.
+const CHIP_LABELS = {
+  q: 'Suche', category: 'Kategorie', type: 'Typ', brand: 'Marke', material: 'Material',
+  wheelSize: 'Laufrad', frameSize: 'Größe', brakeType: 'Bremse', gears: 'Gänge', motor: 'Motor',
+  country: 'Land', color: 'Farbe', minPrice: 'ab', maxPrice: 'bis', onSale: 'Angebote', inStock: 'verfügbar',
+};
+function filterChips(params) {
+  const keys = Object.keys(CHIP_LABELS).filter((k) => params[k]);
+  if (!keys.length) return '';
+  const chips = keys.map((k) => {
+    const val = (k === 'onSale' || k === 'inStock') ? '' : `: ${esc(params[k])}`;
+    return `<button class="chip removable" data-remove="${k}">${esc(CHIP_LABELS[k])}${val} ✕</button>`;
+  }).join('');
+  return `<div class="active-filters">${chips}<button class="chip clear-all" data-remove="*">Alle zurücksetzen</button></div>`;
 }
 
 function heroBlock(facets) {
@@ -322,7 +345,12 @@ async function viewProduct(id) {
   <div class="detail">
     <nav class="breadcrumb"><a href="#/" data-link>Start</a> › <a href="#/?category=${encodeURIComponent(p.category)}" data-link>${esc(p.category)}</a> › ${esc(p.type)}</nav>
     <div class="detail-top">
-      <div class="gallery"><img src="${thumbFor(p)}" alt="${esc(p.name)}" /></div>
+      <div class="gallery">
+        <img id="gallery-main" class="gallery-main" src="${galleryFor(p)[0].uri}" alt="${esc(p.name)} – Seitenansicht" title="Zum Vergrößern klicken" />
+        <div class="gallery-thumbs">
+          ${galleryFor(p).map((g, i) => `<button class="gallery-thumb${i === 0 ? ' active' : ''}" data-img="${g.uri}" data-label="${esc(g.label)}" title="${esc(g.label)}"><img src="${g.uri}" alt="${esc(g.label)}" loading="lazy" /></button>`).join('')}
+        </div>
+      </div>
       <div>
         <div class="brand muted">${esc(p.brand)}</div>
         <h1>${esc(p.name)}</h1>
@@ -378,6 +406,16 @@ async function viewProduct(id) {
 
     ${similar.items.length ? `<div class="section-title"><h2>Ähnliche Produkte</h2></div><div class="grid">${similar.items.map(card).join('')}</div>` : ''}
   </div>`;
+
+  // Gallery: switch main image on thumbnail click; click main to zoom (lightbox).
+  const mainImg = document.getElementById('gallery-main');
+  app.querySelectorAll('.gallery-thumb').forEach((t) => t.addEventListener('click', () => {
+    app.querySelectorAll('.gallery-thumb').forEach((x) => x.classList.remove('active'));
+    t.classList.add('active');
+    mainImg.src = t.dataset.img;
+    mainImg.alt = `${p.name} – ${t.dataset.label}`;
+  }));
+  mainImg.addEventListener('click', () => openLightbox(mainImg.src, mainImg.alt));
 
   document.getElementById('share-btn').addEventListener('click', async () => {
     const url = location.href;
@@ -687,6 +725,48 @@ function viewFaq() {
     <div class="panel"><ul class="specs" style="grid-template-columns:1fr">${GLOSSARY.map(([t, d]) => `<li style="flex-direction:column;align-items:flex-start"><span style="color:var(--text);font-weight:700">${esc(t)}</span><span>${esc(d)}</span></li>`).join('')}</ul></div>`;
 }
 
+// ---- Lightbox (image zoom overlay) ----
+function openLightbox(src, alt) {
+  const ov = document.createElement('div');
+  ov.className = 'lightbox';
+  ov.innerHTML = `<button class="lightbox-close" aria-label="Schließen">✕</button><img src="${esc(src)}" alt="${esc(alt || '')}" />`;
+  const close = () => ov.remove();
+  ov.addEventListener('click', (e) => { if (e.target === ov || e.target.closest('.lightbox-close')) close(); });
+  document.addEventListener('keydown', function esc2(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', esc2); } });
+  document.body.appendChild(ov);
+}
+
+function viewImpressum() {
+  app.innerHTML = `
+    <div class="section-title"><h2>📄 Impressum</h2></div>
+    <div class="panel prose">
+      <p><strong>Angaben gemäß § 5 DDG (Digitale-Dienste-Gesetz)</strong></p>
+      <p>Alles ums Fahrrad – Günstiger-Preis-Finder<br>[Betreiber:in / Firma]<br>[Straße &amp; Hausnummer]<br>[PLZ Ort]</p>
+      <p><strong>Kontakt:</strong> [E-Mail-Adresse]</p>
+      <p><strong>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV:</strong> [Name]</p>
+      <p class="muted">Hinweis: Dies ist ein Prototyp mit synthetischen Daten. Die Platzhalter
+      in eckigen Klammern sind vor einem echten Betrieb durch reale Angaben zu ersetzen.</p>
+    </div>`;
+}
+function viewDatenschutz() {
+  app.innerHTML = `
+    <div class="section-title"><h2>🔒 Datenschutz</h2></div>
+    <div class="panel prose">
+      <p>Wir verarbeiten personenbezogene Daten sparsam und transparent. Diese Anwendung
+      ist ein Prototyp; es findet <strong>kein Tracking</strong> und keine Weitergabe an Dritte statt.</p>
+      <h3>Welche Daten</h3>
+      <ul>
+        <li><strong>Konto</strong> (optional): E-Mail, Anzeigename, Passwort-Hash (scrypt), Präferenzen.</li>
+        <li><strong>Merkliste &amp; Preisalarme</strong>: an dein Konto bzw. an eine lokale Gast-Kennung gebunden.</li>
+        <li><strong>Lokal im Browser</strong>: Theme, Suchverlauf, zuletzt angesehene Produkte, Vergleichsauswahl, Session-Token.</li>
+      </ul>
+      <h3>Deine Rechte</h3>
+      <p>Du kannst deine Daten jederzeit als JSON <a href="/api/export" download>exportieren</a> und dein
+      Konto inklusive aller Daten unter „Preisalarme → Datenschutz" vollständig löschen (Recht auf Löschung).</p>
+      <p class="muted">Vor einem echten Betrieb ist diese Erklärung rechtlich zu prüfen und zu vervollständigen.</p>
+    </div>`;
+}
+
 // ---- Shared UI helpers ----
 const spinner = () => `<div class="spinner">⏳ Lädt …</div>`;
 const emptyState = (msg = 'Keine Produkte gefunden. Passe Suche oder Filter an.') => `<div class="empty"><p style="font-size:2rem">🔍</p><p>${esc(msg)}</p></div>`;
@@ -710,6 +790,13 @@ function wireFilters(params) {
   });
   const reset = document.getElementById('reset-filters');
   if (reset) reset.addEventListener('click', () => navigateWith({ q: params.q || '' }));
+  app.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', () => {
+    const key = b.dataset.remove;
+    if (key === '*') return navigateWith({});
+    const next = { ...params, page: 1 };
+    delete next[key];
+    navigateWith(next);
+  }));
   app.querySelectorAll('[data-page]').forEach((b) =>
     b.addEventListener('click', () => !b.disabled && navigateWith({ ...params, page: b.dataset.page })));
 }
@@ -851,6 +938,8 @@ async function route() {
     if (path === 'vergleich') return await viewCompare(params);
     if (path === 'haendler') return await viewMerchants();
     if (path === 'faq') return viewFaq();
+    if (path === 'impressum') return viewImpressum();
+    if (path === 'datenschutz') return viewDatenschutz();
     if (path === 'konto') return viewAccount();
     if (path === 'wishlist') return await viewWishlist();
     if (path === 'alerts') return await viewAlerts();

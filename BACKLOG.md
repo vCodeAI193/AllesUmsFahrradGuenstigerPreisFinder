@@ -19,7 +19,7 @@ die Box ankreuzen (`[x]`) und das Feature nach `FEATURES.md` überführen.
 - [ ] **B005** – Facetten-Suche mit Live-Trefferzahl pro Filterwert
 - [ ] **B006** – Synonym- und Tippfehler-Wörterbuch für Fahrradbegriffe
 - [ ] **B007** – Suche mit logischen Operatoren (UND/ODER/NICHT)
-- [ ] **B008** – Filter-Chips über der Trefferliste (entfernbar)
+- [x] **B008** – Filter-Chips über der Trefferliste (entfernbar)
 - [ ] **B009** – Trending-Suchen / beliebte Suchbegriffe der Woche
 - [ ] **B010** – Suchergebnis-Teilen per Link mit allen aktiven Filtern
 - [x] **B011** – Zuletzt angesehene Produkte als eigene Leiste
@@ -81,7 +81,7 @@ die Box ankreuzen (`[x]`) und das Feature nach `FEATURES.md` überführen.
 
 ## Produktdaten & Detailseite
 
-- [ ] **B055** – Echte Bildergalerie mit mehreren Ansichten & Zoom
+- [x] **B055** – Echte Bildergalerie mit mehreren Ansichten & Zoom
 - [ ] **B056** – Produkt-Matching: identische Artikel mehrerer Shops zusammenführen
 - [ ] **B057** – Größentabelle und Geometrie-Daten für Fahrräder
 - [ ] **B058** – Kompatibilitätsprüfung für Komponenten (z. B. Standards)
@@ -270,7 +270,7 @@ die Box ankreuzen (`[x]`) und das Feature nach `FEATURES.md` überführen.
 ## Datenschutz, Recht & Compliance
 
 - [ ] **B195** – Cookie-/Consent-Banner mit granularen Optionen
-- [ ] **B196** – Datenschutzerklärung und Impressum als Seiten
+- [x] **B196** – Datenschutzerklärung und Impressum als Seiten
 - [ ] **B197** – Einwilligungs-Verwaltung und Opt-out
 - [ ] **B198** – Daten-Aufbewahrungsfristen und Auto-Löschung
 - [ ] **B199** – Barrierefreiheitserklärung (BFSG)

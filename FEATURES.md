@@ -80,7 +80,7 @@ Weitere 200 offene Feature-Ideen stehen im [`BACKLOG.md`](BACKLOG.md).
 ## 6. Produktdaten & Detailseite
 
 51. ✅ Detailseite mit allen technischen Spezifikationen
-52. 🔄 Bildergalerie pro Produkt (aktuell ein generiertes Platzhalterbild)
+52. ✅ Bildergalerie pro Produkt (mehrere Ansichten + Zoom-Lightbox)
 53. ✅ Normalisierung/Anreicherung der Produktdaten (Preis-Statistik etc.)
 54. ⬜ Zusammenführen identischer Produkte mehrerer Shops
 55. ✅ Anzeige der Garantie-/Gewährleistungsinfos
