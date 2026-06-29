@@ -132,7 +132,7 @@ Weitere 200 offene Feature-Ideen stehen im [`BACKLOG.md`](BACKLOG.md).
 ## 10. Technik, Qualität & Betrieb
 
 91. ✅ Responsives Web-Frontend (Mobile-first)
-92. ⬜ Progressive Web App / native App
+92. ✅ Progressive Web App (installierbar, Offline-Cache); native App offen
 93. ⬜ Mehrsprachigkeit (aktuell nur Deutsch)
 94. 🔄 Barrierefreiheit (ARIA-Labels, semantisches HTML; noch nicht auditiert)
 95. ✅ Dark Mode

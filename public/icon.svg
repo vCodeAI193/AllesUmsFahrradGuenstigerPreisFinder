@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Günstiger-Preis-Finder">
+  <rect width="512" height="512" rx="96" fill="#0a7d4b"/>
+  <!-- bicycle, centered in the maskable safe zone -->
+  <g fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="170" cy="320" r="74"/>
+    <circle cx="350" cy="320" r="74"/>
+    <path d="M170 320 L250 200 L330 320 M250 200 L290 200 M210 250 L350 320"/>
+    <path d="M150 200 L210 200"/>
+  </g>
+  <!-- price tag -->
+  <g transform="translate(300 120) rotate(20)">
+    <rect x="0" y="0" width="120" height="78" rx="16" fill="#e8541e"/>
+    <circle cx="26" cy="26" r="11" fill="#ffffff"/>
+    <text x="74" y="56" font-family="system-ui, sans-serif" font-size="52" font-weight="800" fill="#ffffff" text-anchor="middle">€</text>
+  </g>
+</svg>

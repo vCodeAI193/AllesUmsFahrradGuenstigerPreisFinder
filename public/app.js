@@ -865,6 +865,13 @@ async function route() {
 }
 window.addEventListener('hashchange', route);
 
+// ---- Service worker registration (PWA / offline) ----
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => { /* offline support optional */ });
+  });
+}
+
 // ---- Boot ----
 (async function init() {
   await refreshUser();

@@ -205,8 +205,8 @@ die Box ankreuzen (`[x]`) und das Feature nach `FEATURES.md` überführen.
 
 ## Mobile, PWA & Apps
 
-- [ ] **B149** – Progressive Web App mit Offline-Cache
-- [ ] **B150** – Installierbares Web-App-Manifest und Icons
+- [x] **B149** – Progressive Web App mit Offline-Cache
+- [x] **B150** – Installierbares Web-App-Manifest und Icons
 - [ ] **B151** – Push-Benachrichtigungen auf Mobilgeräten
 - [ ] **B152** – Native App (iOS/Android) mit geteiltem Backend
 - [ ] **B153** – Home-Screen-Widget mit Top-Deals

@@ -40,6 +40,8 @@ src/store.js               Merkliste, Preisalarme, Newsletter
 src/auth.js                Nutzerkonten: Registrierung/Login (scrypt), Sessions
 src/server.js              Zero-Dependency HTTP-Server: JSON-API + Static-Hosting
 public/                    Frontend (HTML/CSS/Vanilla-JS-SPA, Hash-Routing)
+public/sw.js               Service Worker (PWA: Offline-Cache, App-Shell)
+public/manifest.webmanifest  Web-App-Manifest (installierbar)
 test/                      Unit- & API-Integrationstests (node:test)
 ```
 

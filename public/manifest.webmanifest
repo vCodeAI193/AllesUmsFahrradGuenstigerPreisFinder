@@ -1,0 +1,16 @@
+{
+  "name": "Alles ums Fahrrad – Günstiger-Preis-Finder",
+  "short_name": "Preis-Finder",
+  "description": "Alle günstigen Preise und Angebote rund ums Fahrrad an einem Ort finden.",
+  "lang": "de",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f141b",
+  "theme_color": "#0a7d4b",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
